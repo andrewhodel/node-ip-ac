@@ -32,7 +32,7 @@ exports.init = function(opts={}) {
 
 	var o = {};
 
-	// set default configurable options
+	// default configurable options
 
 	// how many seconds between each iteration of the cleanup loop
 	o.cleanup_loop_seconds = 60;
