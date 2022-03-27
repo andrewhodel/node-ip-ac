@@ -12,6 +12,7 @@ var ip_ac = ipac.init();
 ipac.modify_auth(ip_ac, true, '127.0.0.1');
 
 // test authorization status for an IP
+// this needs to be called every time there is a new IP connection
 var status = ipac.test_ip_allowed(ip_ac, '127.0.0.1');
 
 // test if you should warn users from an IP
