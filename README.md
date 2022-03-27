@@ -27,24 +27,32 @@ if (typeof(ip_ac_test) == 'object') {
 Set these in the object {} passed as the first argument to `ipac.init();`
 
 ```
-	// default configurable options
+// default configurable options
 
-	// how many seconds between each iteration of the cleanup loop
-	o.cleanup_loop_seconds = 60;
+// how many seconds between each iteration of the cleanup loop
+o.cleanup_loop_seconds = 60;
 
-	// how many seconds to block an IP for
-	o.block_ip_for_seconds = 60 * 60 * 24;
+// how many seconds to block an IP for
+o.block_ip_for_seconds = 60 * 60 * 24;
 
-	// warn after N attempts
-	// requests from these IP addresses should
-	// display a denial of service warning for the IP
-	// in the user interface
-	o.warn_after_attempts = 100;
+// warn after N attempts
+// requests from these IP addresses should
+// display a denial of service warning for the IP
+// in the user interface
+o.warn_after_attempts = 100;
 
-	// block after N attempts
-	o.block_after_attempts = 1500;
+// block after N attempts
+o.block_after_attempts = 1500;
 
-	// send this object to send an email when an IP is blocked
-	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
-	o.mail = null;
+// send this object to send an email when an IP is blocked
+// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
+o.mail = null;
 ```
+
+## firewall support
+
+In this module there exists support for `iptables` on Linux.
+
+There is structure for supporting any OS and firewall that NodeJS supports.
+
+There is also structure for supporting API calls to network or hosting providers, like AWS.
