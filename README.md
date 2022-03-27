@@ -16,11 +16,7 @@ ipac.modify_auth(ip_ac, true, '127.0.0.1');
 var status = ipac.test_ip_allowed(ip_ac, '127.0.0.1');
 
 // test if you should warn users from an IP
-var ip_ac_test = ip_ac.allowed_ips['127.0.0.1'];
-var warn = false;
-if (typeof(ip_ac_test) == 'object') {
-	warn = true;
-}
+var warn = ipac.test_ip_warn(ip_ac, '127.0.0.1');
 ```
 
 ## default options
