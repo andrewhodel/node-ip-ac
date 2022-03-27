@@ -1,0 +1,23 @@
+{
+  "name": "node-ip-auth",
+  "version": "1.0.0",
+  "description": "a module for ip access management with services written in nodejs",
+  "main": "node-ip-auth.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrewhodel/node-ip-auth.git"
+  },
+  "keywords": [
+    "rrd",
+    "round",
+    "robin",
+    "datastore",
+    "json"
+  ],
+  "author": "andrewhodel@gmail.com",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/andrewhodel/node-ip-auth/issues"
+  },
+  "homepage": "https://github.com/andrewhodel/node-ip-auth"
+}
