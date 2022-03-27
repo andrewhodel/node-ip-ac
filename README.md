@@ -56,3 +56,9 @@ In this module there exists support for `iptables` on Linux.
 There is structure for supporting any OS and firewall that NodeJS supports.
 
 There is also structure for supporting API calls to network or hosting providers, like AWS.
+
+## license
+
+Code is licensed MIT
+
+Copyright 2022 Andrew Hodel
