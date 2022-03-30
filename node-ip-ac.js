@@ -204,7 +204,16 @@ exports.modify_auth = function(o, authed, addr_string) {
 	// modify the authorization status
 	// via the authed argument for the IP address in addr_string
 
+	if (o.allowed_ips[addr_string] == undefined) {
+
+		// this is the first call to this function for this ip address
+		// add the address
+		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_auth: Date.now(), unauthed_attempts: 0};
+
+	}
+
 	var entry = o.allowed_ips[addr_string];
+
 	var now = Date.now();
 
 	if ((now - entry.last_auth)/1000 > o.block_ip_for_seconds) {
@@ -220,7 +229,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 			// this is the first attempt
 			entry.unauthed_attempts = 1;
 		} else {
-			// this is no an unauthed attempt
+			// this is not an unauthed attempt
 			entry.unauthed_attempts = 0;
 		}
 
