@@ -168,8 +168,8 @@ exports.test_ip_allowed = function(o, addr_string) {
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
-					subject: 'IP address blocked on ' + o.mail.domain + ' after ' + o.block_after_attempts + ' unauthed attempts',
-					html: '<p>This IP address was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p>'
+					subject: addr_string + ' blocked on ' + o.mail.domain + ' after ' + o.block_after_attempts + ' unauthed attempts',
+					html: '<p>The IP address ' + addr_string + ' was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p>'
 				}, function(error, response) {
 					if (error) {
 						log_with_date('error sending email', error);
