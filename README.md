@@ -8,7 +8,11 @@ var ipac = require('node-ip-ac/node-ip-ac.js');
 var ip_ac = ipac.init();
 
 // set authorization status for an IP
-// to allowed
+// to unauthorized
+ipac.modify_auth(ip_ac, undefined, '127.0.0.1');
+// to failed
+ipac.modify_auth(ip_ac, false, '127.0.0.1');
+// to authorized
 ipac.modify_auth(ip_ac, true, '127.0.0.1');
 
 // test authorization status for an IP
@@ -48,7 +52,12 @@ o.block_after_new_connections = 600;
 // this prevents login guessing many times from the same IP address
 o.block_after_unauthed_attempts = 5;
 
+// notify after N absurd auth attempts
+// failed authorization attempts after the IP has been authorized
+o.notify_after_absurd_auth_attempts = 20;
+
 // send this object to send an email when an IP is blocked
+// or the absurd_auth_attempts limit is breached
 // {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 o.mail = null;
 ```

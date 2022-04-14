@@ -19,7 +19,7 @@ var cp = require('child_process');
 // for new (first time connections or logins)
 var default_entry = function() {
 
-	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0};
+	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
 
 }
 
@@ -62,6 +62,10 @@ exports.init = function(opts={}) {
 	// block after N invalid authorization attempts
 	// this prevents login guessing many times from the same IP address
 	o.block_after_unauthed_attempts = 5;
+
+	// notify after N absurd auth attempts
+	// failed authorization attempts after the IP has been authorized
+	o.notify_after_absurd_auth_attempts = 20;
 
 	// send this object to send an email when an IP is blocked
 	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
@@ -112,6 +116,7 @@ exports.init = function(opts={}) {
 				modify_ip_block_os(false, key);
 
 				delete this.o.allowed_ips[key];
+
 			}
 		}
 
@@ -210,8 +215,30 @@ exports.test_ip_allowed = function(o, addr_string) {
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
-					subject: 'node-ip-ac blocked ' + addr_string + ' on ' + o.mail.domain + ' after ' + o.block_after_new_connections + ' new unauthed connections',
+					subject: 'node-ip-ac blocked ' + addr_string + ' on ' + o.mail.domain,
 					html: '<p>The IP address ' + addr_string + ' was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p><br /><br /><a href="https://github.com/andrewhodel/node-ip-ac">node-ip-ac</a>'
+				}, function(error, response) {
+					if (error) {
+						log_with_date('error sending email', error);
+					} else {
+						//log_with_date("Message sent: " + response.message);
+					}
+				});
+
+			}
+
+		} else if (entry.absurd_auth_attempts === o.notify_after_absurd_auth_attempts) {
+
+			// this will only happen once as it is === not >
+
+			if (o.mail !== null) {
+
+				// email the initial admin the list of expired accounts that were removed
+				o.mail.nodemailer_smtpTransport.sendMail({
+					from: "ISPApp <" + o.mail.from + ">", // sender address
+					to: o.mail.to,
+					subject: 'node-ip-ac is reporting an absurd authorization attempt from ' + addr_string + ' on ' + o.mail.domain,
+					html: '<p>The IP address ' + addr_string + ' has an authorized session and ' + entry.absurd_auth_attempts + ' failed authorization attempts have been made from the same IP Address.</p><br /><p>' + JSON.stringify(entry) + '</p><br /><br /><a href="https://github.com/andrewhodel/node-ip-ac">node-ip-ac</a>'
 				}, function(error, response) {
 					if (error) {
 						log_with_date('error sending email', error);
@@ -246,6 +273,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 }
 
 exports.modify_auth = function(o, authed, addr_string) {
+
 	// modify the authorization status
 	// via the authed argument for the IP address in addr_string
 
@@ -260,7 +288,20 @@ exports.modify_auth = function(o, authed, addr_string) {
 	// get a current timestamp
 	var now = Date.now();
 
-	if ((now - entry.last_access)/1000 > o.block_ip_for_seconds || authed) {
+	if (entry.authed === true && authed === false) {
+		// an IP address is authorized but invalid authorizations are happening from the IP
+		// perhaps someone else at the location is abusing the authed IP address and trying to guess
+		// logins or logout the valid user
+		// as node-ip-ac will not deauth an IP without specific instruction to do so
+		//
+		// modify_auth() should be passed undefined as the authed argument when there is a valid logout
+		//
+		// increment absurd_auth_attempts
+		// to notify the admin and allow the valid user to continue normally
+
+		entry.absurd_auth_attempts++;
+
+	} else if ((now - entry.last_access)/1000 > o.block_ip_for_seconds || authed === true) {
 		// authorized or expired
 		// reset the object keys
 		// this removes the requirement for waiting until the next cleanup iteration
@@ -268,6 +309,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 		// and an authorized attempt must reset that possibility
 		entry.unauthed_attempts = 0;
 		entry.unauthed_new_connections = 0;
+		entry.absurd_auth_attempts = 0;
 		entry.blocked = false;
 		entry.warn = false;
 
@@ -275,12 +317,18 @@ exports.modify_auth = function(o, authed, addr_string) {
 			entry.authed = true;
 		}
 
-	} else {
+	} else if (authed === false) {
 
 		// not authorized or expired
 
 		// increment the invalid authorization attempts counter for the IP address
-		entry.unauthed_attempts += 1;
+		entry.unauthed_attempts++;
+
+	} else if (authed === undefined) {
+
+		// this is a valid logout attempt that was authenticated
+		entry.authed = false;
+
 	}
 
 	// set the last_auth attempt time
