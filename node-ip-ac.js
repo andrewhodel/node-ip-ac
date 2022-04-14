@@ -80,11 +80,20 @@ exports.init = function(opts={}) {
 	o.last_cleanup = Date.now();
 	var cleanup = setInterval(function() {
 
+		// consider the time since the last interval as that is when the last_cleanup value was set
 		var seconds_since_last_cleanup = (Date.now() - o.last_cleanup) / 1000;
+
+		var expire_older_than = this.o.block_ip_for_seconds - seconds_since_last_cleanup;
 
 		// clear expired allowed_ips
 		for (var key in this.o.allowed_ips) {
-			if ((Date.now() - this.o.allowed_ips[key].last_auth)/1000 > this.o.block_ip_for_seconds - seconds_since_last_cleanup) {
+
+			// the age of this ip's last access in seconds
+			var age_of_ip = (Date.now() - this.o.allowed_ips[key].last_access)/1000;
+
+			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
+
+			if (age_of_ip > expire_older_than) {
 
 				// unblock the IP at the OS level
 				modify_ip_block_os(false, key);
@@ -182,8 +191,6 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		}
 
-		//console.log(entry, (Date.now()-entry.last_auth)/1000);
-
 		if (entry.blocked) {
 			return false;
 		} else {
@@ -193,7 +200,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		// this is the first call to this function for this ip address
 		// add the address
-		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_auth: Date.now(), unauthed_attempts: 1};
+		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_attempts: 1};
 
 		// return that the address is allowed
 		return true;
@@ -208,7 +215,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		// this is the first call to this function for this ip address
 		// add the address
-		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_auth: Date.now(), unauthed_attempts: 0};
+		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_attempts: 0};
 
 	}
 
@@ -216,8 +223,8 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 	var now = Date.now();
 
-	if ((now - entry.last_auth)/1000 > o.block_ip_for_seconds) {
-		// the last auth attempt was made more than o.block_ip_for_seconds ago
+	if ((now - entry.last_access)/1000 > o.block_ip_for_seconds) {
+		// the last access attempt was made more than o.block_ip_for_seconds ago
 
 		// set these defaults as if it was the first
 		// because denial of service has not been happening from this IP
