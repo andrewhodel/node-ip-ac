@@ -15,6 +15,14 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var os = require('os');
 var cp = require('child_process');
 
+// this is a default entry
+// for new (first time connections or logins)
+var default_entry = function() {
+
+	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0};
+
+}
+
 exports.init = function(opts={}) {
 
 	// remove existing firewall rules created by node-ip-ac
@@ -42,14 +50,18 @@ exports.init = function(opts={}) {
 	// how many seconds to block an IP for
 	o.block_ip_for_seconds = 60 * 60 * 24;
 
-	// warn after N attempts
+	// warn after N unauthorized new connections
 	// requests from these IP addresses should
 	// display a denial of service warning for the IP
 	// in the user interface
-	o.warn_after_attempts = 100;
+	o.warn_after_new_connections = 80;
 
-	// block after N attempts
-	o.block_after_attempts = 1500;
+	// block after N unauthorized new connections
+	o.block_after_new_connections = 600;
+
+	// block after N invalid authorization attempts
+	// this prevents login guessing many times from the same IP address
+	o.block_after_unauthed_attempts = 5;
 
 	// send this object to send an email when an IP is blocked
 	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
@@ -92,6 +104,7 @@ exports.init = function(opts={}) {
 			var age_of_ip = (Date.now() - this.o.allowed_ips[key].last_access)/1000;
 
 			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
+			//console.log(key, this.o.allowed_ips[key]);
 
 			if (age_of_ip > expire_older_than) {
 
@@ -137,6 +150,18 @@ var modify_ip_block_os = function(block, addr_string) {
 
 }
 
+exports.ip_details = function(o, addr_string) {
+
+	var i = default_entry();
+
+	if (typeof(o.allowed_ips[addr_string]) == 'object') {
+		i = o.allowed_ips[addr_string];
+	}
+
+	return i;
+
+}
+
 exports.test_ip_warn = function(o, addr_string) {
 
 	var warn = false;
@@ -154,31 +179,39 @@ exports.test_ip_allowed = function(o, addr_string) {
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 
-	if (typeof(o.allowed_ips[addr_string]) == 'object') {
+	if (o.allowed_ips[addr_string] !== undefined) {
+
 		// a matching ip address has been found
 		var entry = o.allowed_ips[addr_string];
-		entry.unauthed_attempts++;
 
-		// warn this IP address if there have been too many unauthed attempts
-		if (entry.unauthed_attempts > o.warn_after_attempts && entry.warn == false) {
+		if (entry.authed === false) {
+			// increment the number of unauthed connections for this IP address
+			entry.unauthed_new_connections++;
+		}
+
+		// warn this IP address if it has made too many unauthed connections
+		if (entry.unauthed_new_connections > o.warn_after_new_connections && entry.warn === false) {
 			entry.warn = true;
 		}
 
-		// block this IP address if there have been too many unauthed attempts
-		if (entry.unauthed_attempts > o.block_after_attempts && entry.blocked == false) {
+		// block this IP address if it has made too many unauthed connections
+		// or invalid authorization attempts
+		if ((entry.unauthed_new_connections > o.block_after_new_connections || entry.unauthed_attempts > o.block_after_unauthed_attempts) && entry.blocked === false) {
+
+			// set the IP address to blocked
 			entry.blocked = true;
 
 			// block this IP at the OS level
 			modify_ip_block_os(true, addr_string);
 
-			if (o.mail != null) {
+			if (o.mail !== null) {
 
 				// email the initial admin the list of expired accounts that were removed
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
-					subject: addr_string + ' blocked on ' + o.mail.domain + ' after ' + o.block_after_attempts + ' unauthed attempts',
-					html: '<p>The IP address ' + addr_string + ' was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p>'
+					subject: 'node-ip-ac blocked ' + addr_string + ' on ' + o.mail.domain + ' after ' + o.block_after_new_connections + ' new unauthed connections',
+					html: '<p>The IP address ' + addr_string + ' was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p><br /><br /><a href="https://github.com/andrewhodel/node-ip-ac">node-ip-ac</a>'
 				}, function(error, response) {
 					if (error) {
 						log_with_date('error sending email', error);
@@ -191,67 +224,69 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		}
 
-		if (entry.blocked) {
-			return false;
-		} else {
-			return true;
-		}
+		// update the entry in memory
+		o.allowed_ips[addr_string] = entry;
+
 	} else {
 
-		// this is the first call to this function for this ip address
-		// add the address
-		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_attempts: 1};
+		// this IP address is new to the access control system
+		o.allowed_ips[addr_string] = default_entry();
 
-		// return that the address is allowed
+	}
+
+	// set the last_access attempt time
+	o.allowed_ips[addr_string].last_access = Date.now();
+
+	if (o.allowed_ips[addr_string].blocked) {
+		return false;
+	} else {
 		return true;
 	}
+
 }
 
 exports.modify_auth = function(o, authed, addr_string) {
 	// modify the authorization status
 	// via the authed argument for the IP address in addr_string
 
-	if (o.allowed_ips[addr_string] == undefined) {
-
-		// this is the first call to this function for this ip address
-		// add the address
-		o.allowed_ips[addr_string] = {warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_attempts: 0};
-
+	if (o.allowed_ips[addr_string] === undefined) {
+		// this IP address is new to the access control system
+		o.allowed_ips[addr_string] = default_entry();
 	}
 
+	// get the IP address
 	var entry = o.allowed_ips[addr_string];
 
+	// get a current timestamp
 	var now = Date.now();
 
-	if ((now - entry.last_access)/1000 > o.block_ip_for_seconds) {
-		// the last access attempt was made more than o.block_ip_for_seconds ago
-
-		// set these defaults as if it was the first
-		// because denial of service has not been happening from this IP
+	if ((now - entry.last_access)/1000 > o.block_ip_for_seconds || authed) {
+		// authorized or expired
+		// reset the object keys
+		// this removes the requirement for waiting until the next cleanup iteration
+		// as the whole functionality may be executed during that time
+		// and an authorized attempt must reset that possibility
+		entry.unauthed_attempts = 0;
+		entry.unauthed_new_connections = 0;
 		entry.blocked = false;
 		entry.warn = false;
 
-		// test the auth status
-		if (!authed) {
-			// this is the first attempt
-			entry.unauthed_attempts = 1;
-		} else {
-			// this is not an unauthed attempt
-			entry.unauthed_attempts = 0;
+		if (authed) {
+			entry.authed = true;
 		}
 
 	} else {
 
-		// if the authed status is true
-		// reset everything
-		if (authed) {
-			entry.blocked = false;
-			entry.unauthed_attempts = 0;
-			entry.warn = false;
-		}
+		// not authorized or expired
+
+		// increment the invalid authorization attempts counter for the IP address
+		entry.unauthed_attempts += 1;
 	}
 
-	// remember the last_auth attempt time
+	// set the last_auth attempt time
 	entry.last_auth = Date.now();
+
+	// update the entry in memory
+	o.allowed_ips[addr_string] = entry;
 
 }

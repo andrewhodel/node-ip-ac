@@ -17,11 +17,14 @@ var status = ipac.test_ip_allowed(ip_ac, '127.0.0.1');
 
 // test if you should warn users from an IP
 var warn = ipac.test_ip_warn(ip_ac, '127.0.0.1');
+
+// return details for a specific ip address
+var ip_details = ipac.ip_details(ip_ac, '127.0.0.1');
 ```
 
 ## default options
 
-Set these in the object {} passed as the first argument to `ipac.init();`
+Set these in the object {} passed as the first argument to `ipac.init();` if you want to change the defaults shown here.
 
 ```
 // default configurable options
@@ -32,14 +35,18 @@ o.cleanup_loop_seconds = 60;
 // how many seconds to block an IP for
 o.block_ip_for_seconds = 60 * 60 * 24;
 
-// warn after N attempts
+// warn after N unauthorized new connections
 // requests from these IP addresses should
 // display a denial of service warning for the IP
 // in the user interface
-o.warn_after_attempts = 100;
+o.warn_after_new_connections = 80;
 
-// block after N attempts
-o.block_after_attempts = 1500;
+// block after N unauthorized new connections
+o.block_after_new_connections = 600;
+
+// block after N invalid authorization attempts
+// this prevents login guessing many times from the same IP address
+o.block_after_unauthed_attempts = 5;
 
 // send this object to send an email when an IP is blocked
 // {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
