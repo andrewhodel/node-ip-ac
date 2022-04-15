@@ -90,7 +90,12 @@ exports.init = function(opts={}) {
 	}
 
 	// set non configurable key/value pairs
-	o.allowed_ips = {};
+	o.ips = {};
+
+	// store the counts updated in the cleanup loop
+	o.total_count = 0;
+	o.blocked_count = 0;
+	o.warn_count = 0;
 
 	// start the cleanup routine
 	o.last_cleanup = Date.now();
@@ -101,24 +106,45 @@ exports.init = function(opts={}) {
 
 		var expire_older_than = this.o.block_ip_for_seconds - seconds_since_last_cleanup;
 
-		// clear expired allowed_ips
-		for (var key in this.o.allowed_ips) {
+		var ctotal = 0;
+		var cblocked = 0;
+		var cwarn = 0;
+
+		// clear expired ips
+		for (var key in this.o.ips) {
 
 			// the age of this ip's last access in seconds
-			var age_of_ip = (Date.now() - this.o.allowed_ips[key].last_access)/1000;
+			var age_of_ip = (Date.now() - this.o.ips[key].last_access)/1000;
 
 			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
-			//console.log(key, this.o.allowed_ips[key]);
+			//console.log(key, this.o.ips[key]);
 
 			if (age_of_ip > expire_older_than) {
 
 				// unblock the IP at the OS level
 				modify_ip_block_os(false, key);
 
-				delete this.o.allowed_ips[key];
+				delete this.o.ips[key];
+
+			} else {
+
+				// this ip was not deleted, count it
+				ctotal++;
+				if (this.o.ips[key].blocked) {
+					cblocked++;
+				}
+				if (this.o.ips[key].warn) {
+					cwarn++;
+				}
 
 			}
+
 		}
+
+		// update the ipac object
+		o.total_count = ctotal;
+		o.blocked_count = cblocked;
+		o.warn_count = cwarn;
 
 		// update the last cleanup
 		o.last_cleanup = Date.now();
@@ -159,8 +185,8 @@ exports.ip_details = function(o, addr_string) {
 
 	var i = default_entry();
 
-	if (typeof(o.allowed_ips[addr_string]) == 'object') {
-		i = o.allowed_ips[addr_string];
+	if (typeof(o.ips[addr_string]) == 'object') {
+		i = o.ips[addr_string];
 	}
 
 	return i;
@@ -171,8 +197,8 @@ exports.test_ip_warn = function(o, addr_string) {
 
 	var warn = false;
 
-	if (typeof(o.allowed_ips[addr_string]) == 'object') {
-		warn = o.allowed_ips[addr_string].warn;
+	if (typeof(o.ips[addr_string]) == 'object') {
+		warn = o.ips[addr_string].warn;
 	}
 
 	return warn;
@@ -184,10 +210,10 @@ exports.test_ip_allowed = function(o, addr_string) {
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 
-	if (o.allowed_ips[addr_string] !== undefined) {
+	if (o.ips[addr_string] !== undefined) {
 
 		// a matching ip address has been found
-		var entry = o.allowed_ips[addr_string];
+		var entry = o.ips[addr_string];
 
 		if (entry.authed === false) {
 			// increment the number of unauthed connections for this IP address
@@ -252,19 +278,19 @@ exports.test_ip_allowed = function(o, addr_string) {
 		}
 
 		// update the entry in memory
-		o.allowed_ips[addr_string] = entry;
+		o.ips[addr_string] = entry;
 
 	} else {
 
 		// this IP address is new to the access control system
-		o.allowed_ips[addr_string] = default_entry();
+		o.ips[addr_string] = default_entry();
 
 	}
 
 	// set the last_access attempt time
-	o.allowed_ips[addr_string].last_access = Date.now();
+	o.ips[addr_string].last_access = Date.now();
 
-	if (o.allowed_ips[addr_string].blocked) {
+	if (o.ips[addr_string].blocked) {
 		return false;
 	} else {
 		return true;
@@ -277,13 +303,13 @@ exports.modify_auth = function(o, authed, addr_string) {
 	// modify the authorization status
 	// via the authed argument for the IP address in addr_string
 
-	if (o.allowed_ips[addr_string] === undefined) {
+	if (o.ips[addr_string] === undefined) {
 		// this IP address is new to the access control system
-		o.allowed_ips[addr_string] = default_entry();
+		o.ips[addr_string] = default_entry();
 	}
 
 	// get the IP address
-	var entry = o.allowed_ips[addr_string];
+	var entry = o.ips[addr_string];
 
 	// get a current timestamp
 	var now = Date.now();
@@ -335,6 +361,6 @@ exports.modify_auth = function(o, authed, addr_string) {
 	entry.last_auth = Date.now();
 
 	// update the entry in memory
-	o.allowed_ips[addr_string] = entry;
+	o.ips[addr_string] = entry;
 
 }

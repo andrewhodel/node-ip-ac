@@ -62,6 +62,21 @@ o.notify_after_absurd_auth_attempts = 20;
 o.mail = null;
 ```
 
+## counts
+
+You may want the total counts.
+
+```javascript
+// count of IP Addresses that have connected in the last ip_ac.block_ip_for_seconds
+ip_ac.total_count;
+
+// count of IP Addresses that are blocked
+ip_ac.blocked_count;
+
+// count of IP Addresses that are warned
+ip_ac.warn_count;
+```
+
 ## firewall support
 
 In this module there exists support for `iptables` on Linux.
