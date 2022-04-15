@@ -2,7 +2,7 @@
 
 In your socket/request/api code
 
-```
+```javascript
 var ipac = require('node-ip-ac/node-ip-ac.js');
 
 var ip_ac = ipac.init();
@@ -30,7 +30,7 @@ var ip_details = ipac.ip_details(ip_ac, '127.0.0.1');
 
 Set these in the object {} passed as the first argument to `ipac.init();` if you want to change the defaults shown here.
 
-```
+```javascript
 // default configurable options
 
 // how many seconds between each iteration of the cleanup loop
