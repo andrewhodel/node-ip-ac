@@ -221,13 +221,13 @@ exports.test_ip_allowed = function(o, addr_string) {
 		}
 
 		// warn this IP address if it has made too many unauthed connections
-		if (entry.unauthed_new_connections > o.warn_after_new_connections && entry.warn === false) {
+		if (entry.unauthed_new_connections >= o.warn_after_new_connections && entry.warn === false) {
 			entry.warn = true;
 		}
 
 		// block this IP address if it has made too many unauthed connections
 		// or invalid authorization attempts
-		if ((entry.unauthed_new_connections > o.block_after_new_connections || entry.unauthed_attempts > o.block_after_unauthed_attempts) && entry.blocked === false) {
+		if ((entry.unauthed_new_connections >= o.block_after_new_connections || entry.unauthed_attempts >= o.block_after_unauthed_attempts) && entry.blocked === false) {
 
 			// set the IP address to blocked
 			entry.blocked = true;
