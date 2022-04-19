@@ -70,6 +70,7 @@ exports.init = function(opts={}) {
 	// send this object to send an email when an IP is blocked
 	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 	o.mail = null;
+	o.next_email_blocked_ips = [];
 
 	if (typeof(opts.mail) == 'object') {
 		// make sure the object is valid
@@ -145,6 +146,34 @@ exports.init = function(opts={}) {
 		o.total_count = ctotal;
 		o.blocked_count = cblocked;
 		o.warn_count = cwarn;
+
+		if (o.mail !== null && o.next_email_blocked_ips.length > 0) {
+
+			// generate the string of IPs for the email body
+			var s = '';
+			for (var n in o.next_email_blocked_ips) {
+				s += o.next_email_blocked_ips[n] + ', ';
+			}
+			s = s.substring(0, s.length-2);
+
+			// email the initial admin the list of expired accounts that were removed
+			o.mail.nodemailer_smtpTransport.sendMail({
+				from: "ISPApp <" + o.mail.from + ">", // sender address
+				to: o.mail.to,
+				subject: 'node-ip-ac blocked ' + o.next_email_blocked_ips.length + ' on ' + o.mail.domain,
+				html: '<p>These IP address were blocked.</p><br /><p>' + s + '</p>'
+			}, function(error, response) {
+				if (error) {
+					log_with_date('error sending email', error);
+				} else {
+					//log_with_date("Message sent: " + response.message);
+				}
+			});
+
+			// reset it
+			o.next_email_blocked_ips = [];
+
+		}
 
 		// update the last cleanup
 		o.last_cleanup = Date.now();
@@ -237,19 +266,8 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			if (o.mail !== null) {
 
-				// email the initial admin the list of expired accounts that were removed
-				o.mail.nodemailer_smtpTransport.sendMail({
-					from: "ISPApp <" + o.mail.from + ">", // sender address
-					to: o.mail.to,
-					subject: 'node-ip-ac blocked ' + addr_string + ' on ' + o.mail.domain,
-					html: '<p>The IP address ' + addr_string + ' was blocked and will be allowed in ' + o.block_ip_for_seconds + ' seconds.</p><br /><p>' + JSON.stringify(entry) + '</p><br /><br /><a href="https://github.com/andrewhodel/node-ip-ac">node-ip-ac</a>'
-				}, function(error, response) {
-					if (error) {
-						log_with_date('error sending email', error);
-					} else {
-						//log_with_date("Message sent: " + response.message);
-					}
-				});
+				// add to next email
+				o.next_email_blocked_ips.push(addr_string);
 
 			}
 
