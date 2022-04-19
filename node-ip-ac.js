@@ -71,6 +71,7 @@ exports.init = function(opts={}) {
 	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 	o.mail = null;
 	o.next_email_blocked_ips = [];
+	o.next_email_absurd_ips = [];
 
 	if (typeof(opts.mail) == 'object') {
 		// make sure the object is valid
@@ -147,31 +148,62 @@ exports.init = function(opts={}) {
 		o.blocked_count = cblocked;
 		o.warn_count = cwarn;
 
-		if (o.mail !== null && o.next_email_blocked_ips.length > 0) {
+		if (o.mail !== null) {
 
-			// generate the string of IPs for the email body
-			var s = '';
-			for (var n in o.next_email_blocked_ips) {
-				s += o.next_email_blocked_ips[n] + ', ';
-			}
-			s = s.substring(0, s.length-2);
+			if (o.next_email_blocked_ips.length > 0) {
 
-			// email the initial admin the list of expired accounts that were removed
-			o.mail.nodemailer_smtpTransport.sendMail({
-				from: "ISPApp <" + o.mail.from + ">", // sender address
-				to: o.mail.to,
-				subject: 'node-ip-ac blocked ' + o.next_email_blocked_ips.length + ' on ' + o.mail.domain,
-				html: '<p>These IP address were blocked.</p><br /><p>' + s + '</p>'
-			}, function(error, response) {
-				if (error) {
-					log_with_date('error sending email', error);
-				} else {
-					//log_with_date("Message sent: " + response.message);
+				// generate the string of IPs for the email body
+				var s = '';
+				for (var n in o.next_email_blocked_ips) {
+					s += o.next_email_blocked_ips[n] + ', ';
 				}
-			});
+				s = s.substring(0, s.length-2);
 
-			// reset it
-			o.next_email_blocked_ips = [];
+				// email the initial admin the list of expired accounts that were removed
+				o.mail.nodemailer_smtpTransport.sendMail({
+					from: "ISPApp <" + o.mail.from + ">", // sender address
+					to: o.mail.to,
+					subject: 'node-ip-ac blocked ' + o.next_email_blocked_ips.length + ' IP(s) on ' + o.mail.domain,
+					html: '<p>These IP address were blocked.</p><br /><p>' + s + '</p>'
+				}, function(error, response) {
+					if (error) {
+						log_with_date('error sending email', error);
+					} else {
+						//log_with_date("Message sent: " + response.message);
+					}
+				});
+
+				// reset it
+				o.next_email_blocked_ips = [];
+
+			}
+
+			if (o.next_email_absurd_ips.length > 0) {
+
+				// generate the string of IPs for the email body
+				var s = '';
+				for (var n in o.next_email_absurd_ips) {
+					s += o.next_email_absurd_ips[n] + ', ';
+				}
+				s = s.substring(0, s.length-2);
+
+				o.mail.nodemailer_smtpTransport.sendMail({
+					from: "ISPApp <" + o.mail.from + ">", // sender address
+					to: o.mail.to,
+					subject: 'node-ip-ac is reporting ' + o.next_email_absurd_ips.length + ' absurd authorization attempt(s) on ' + o.mail.domain,
+					html: '<p>These IP address tried to brute force or guess a login while there was an authenticated connection from the same IP.  It may be a malicious user or a malicious NAT (RFC1918) network.  They are not blocked.</p><br /><p>' + s + '</p>'
+				}, function(error, response) {
+					if (error) {
+						log_with_date('error sending email', error);
+					} else {
+						//log_with_date("Message sent: " + response.message);
+					}
+				});
+
+				// reset it
+				o.next_email_absurd_ips = [];
+
+			}
 
 		}
 
@@ -277,7 +309,9 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			if (o.mail !== null) {
 
-				// email the initial admin the list of expired accounts that were removed
+				// add to next email
+				o.next_email_absurd_ips.push(addr_string);
+
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
