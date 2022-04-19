@@ -312,19 +312,6 @@ exports.test_ip_allowed = function(o, addr_string) {
 				// add to next email
 				o.next_email_absurd_ips.push(addr_string);
 
-				o.mail.nodemailer_smtpTransport.sendMail({
-					from: "ISPApp <" + o.mail.from + ">", // sender address
-					to: o.mail.to,
-					subject: 'node-ip-ac is reporting an absurd authorization attempt from ' + addr_string + ' on ' + o.mail.domain,
-					html: '<p>The IP address ' + addr_string + ' has an authorized session and ' + entry.absurd_auth_attempts + ' failed authorization attempts have been made from the same IP Address.</p><br /><p>' + JSON.stringify(entry) + '</p><br /><br /><a href="https://github.com/andrewhodel/node-ip-ac">node-ip-ac</a>'
-				}, function(error, response) {
-					if (error) {
-						log_with_date('error sending email', error);
-					} else {
-						//log_with_date("Message sent: " + response.message);
-					}
-				});
-
 			}
 
 		}
