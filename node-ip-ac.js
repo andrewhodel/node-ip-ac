@@ -14,6 +14,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 var os = require('os');
 var cp = require('child_process');
+var net = require('net');
 
 // this is a default entry
 // for new (first time connections or logins)
