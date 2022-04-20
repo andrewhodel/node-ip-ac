@@ -39,6 +39,24 @@ o.cleanup_loop_seconds = 60;
 // how many seconds to block an IP for
 o.block_ip_for_seconds = 60 * 60 * 24;
 
+// maximum depth to classify IPv6 is
+// 64 bits of a network prefix and 64 bits of an interface identifier
+// 64 bits is 4 groups that are 16 bits each
+o.block_ipv6_subnets_group_depth = 4;
+
+// the number of IP bans within a subnet group required for a subnet group to be blocked
+o.block_ipv6_subnets_breach = 40;
+// number of lowest level subnets to block
+// multiplied by itself for each step back
+//
+// example values: depth 4 and breach 40
+// example ip: 2404:3c00:c140:b3c0:5d43:d92e:7b4f:5d52
+//
+// 2404* blocked at 40*40*40*40 ips
+// 2404:3c00* blocked at 40*40*40 ips
+// 2404:3c00:c140* blocked at 40*40 ips
+// 2404:3c00:c140:b3c0* blocked at 40 ips
+
 // warn after N unauthorized new connections
 // requests from these IP addresses should
 // display a denial of service warning for the IP

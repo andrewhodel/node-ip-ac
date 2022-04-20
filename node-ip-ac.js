@@ -23,6 +23,74 @@ var default_entry = function() {
 
 }
 
+var get_ranked_groups_ipv6 = function(o, addr_string) {
+
+	// split groups
+	var groups = addr_string.split(':');
+
+	var all = [];
+	for (var g in groups) {
+		all.push(groups[g]);
+	}
+
+	//console.log('all', all);
+
+	// create ranked groups
+	var ranked_groups = [];
+
+	var at = 0;
+
+	var g = 0;
+	while (g < all.length) {
+		ranked_groups.push(all[at]);
+
+		if (g === o.block_ipv6_subnets_group_depth-1) {
+			// what size to classify groups by
+			break;
+		}
+
+		g++;
+
+	}
+
+	//console.log('ranked_groups', ranked_groups);
+
+	var a = 0;
+	while (a < all.length) {
+
+		if (a === o.block_ipv6_subnets_group_depth) {
+			// what size to classify groups by
+			break;
+		}
+
+		at++;
+		var gl = 0;
+		while (gl < all.length) {
+
+			if (gl === o.block_ipv6_subnets_group_depth) {
+				// what size to classify groups by
+				break;
+			}
+
+			if (gl < at) {
+				gl++;
+				continue;
+			}
+
+			ranked_groups[gl] += ':' + all[at];
+
+			gl++;
+
+		}
+
+		a++;
+
+	}
+
+	return ranked_groups;
+
+}
+
 exports.init = function(opts={}) {
 
 	// remove existing firewall rules created by node-ip-ac
@@ -49,6 +117,24 @@ exports.init = function(opts={}) {
 
 	// how many seconds to block an IP for
 	o.block_ip_for_seconds = 60 * 60 * 24;
+
+	// maximum depth to classify IPv6 is
+	// 64 bits of a network prefix and 64 bits of an interface identifier
+	// 64 bits is 4 groups that are 16 bits each
+	o.block_ipv6_subnets_group_depth = 4;
+
+	// the number of IP bans within a subnet group required for a subnet group to be blocked
+	o.block_ipv6_subnets_breach = 40;
+	// number of lowest level subnets to block
+	// multiplied by itself for each step back
+	//
+	// example values: depth 4 and breach 40
+	// example ip: 2404:3c00:c140:b3c0:5d43:d92e:7b4f:5d52
+	//
+	// 2404* blocked at 40*40*40*40 ips
+	// 2404:3c00* blocked at 40*40*40 ips
+	// 2404:3c00:c140* blocked at 40*40 ips
+	// 2404:3c00:c140:b3c0* blocked at 40 ips
 
 	// warn after N unauthorized new connections
 	// requests from these IP addresses should
@@ -94,6 +180,8 @@ exports.init = function(opts={}) {
 	// set non configurable key/value pairs
 	o.ips = {};
 
+	o.ipv6_subnets = {};
+
 	// store the counts updated in the cleanup loop
 	o.total_count = 0;
 	o.blocked_count = 0;
@@ -106,36 +194,36 @@ exports.init = function(opts={}) {
 		// consider the time since the last interval as that is when the last_cleanup value was set
 		var seconds_since_last_cleanup = (Date.now() - o.last_cleanup) / 1000;
 
-		var expire_older_than = this.o.block_ip_for_seconds - seconds_since_last_cleanup;
+		var expire_older_than = o.block_ip_for_seconds - seconds_since_last_cleanup;
 
 		var ctotal = 0;
 		var cblocked = 0;
 		var cwarn = 0;
 
 		// clear expired ips
-		for (var key in this.o.ips) {
+		for (var key in o.ips) {
 
 			// the age of this ip's last access in seconds
-			var age_of_ip = (Date.now() - this.o.ips[key].last_access)/1000;
+			var age_of_ip = (Date.now() - o.ips[key].last_access)/1000;
 
 			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
-			//console.log(key, this.o.ips[key]);
+			//console.log(key, o.ips[key]);
 
 			if (age_of_ip > expire_older_than) {
 
 				// unblock the IP at the OS level
 				modify_ip_block_os(false, key);
 
-				delete this.o.ips[key];
+				delete o.ips[key];
 
 			} else {
 
 				// this ip was not deleted, count it
 				ctotal++;
-				if (this.o.ips[key].blocked) {
+				if (o.ips[key].blocked) {
 					cblocked++;
 				}
-				if (this.o.ips[key].warn) {
+				if (o.ips[key].warn) {
 					cwarn++;
 				}
 
@@ -148,7 +236,63 @@ exports.init = function(opts={}) {
 		o.blocked_count = cblocked;
 		o.warn_count = cwarn;
 
+		// handle subnet group blocks with
+		//
+		// o.ipv6_subnets
+		// o.block_ipv6_subnets_group_depth
+		// o.block_ipv6_subnets_breach
+		for (s in o.ipv6_subnets) {
+
+			if (o.ipv6_subnets[s].blockedMs !== undefined) {
+				// this subnet group is blocked
+				// test if the block should expire
+
+				var age_of_block = (Date.now() - o.ipv6_subnets[s].blockedMs)/1000;
+
+				if (age_of_block > expire_older_than) {
+					// unblock this subnet group
+					delete o.ipv6_subnets[s];
+				}
+
+				continue;
+
+			}
+
+			var groups = s.split(':');
+
+			var group_breach = o.block_ipv6_subnets_breach * (o.block_ipv6_subnets_group_depth + 1 - groups.length);
+
+			if (o.ipv6_subnets[s].ip_bans === group_breach) {
+
+				// this subnet group has breached the limit
+				// block it
+				o.ipv6_subnets[s].blockedMs = Date.now();
+
+				if (o.mail !== null) {
+
+					// send notification
+					o.mail.nodemailer_smtpTransport.sendMail({
+						from: "ISPApp <" + o.mail.from + ">", // sender address
+						to: o.mail.to,
+						subject: 'node-ip-ac blocked subnet group ' + s + ' on ' + o.mail.domain,
+						html: '<p>This subnet group was blocked.</p><br /><p>' + s + '</p>'
+					}, function(error, response) {
+						if (error) {
+							log_with_date('error sending email', error);
+						} else {
+							//log_with_date("Message sent: " + response.message);
+						}
+					});
+
+				}
+
+			}
+
+		}
+
 		if (o.mail !== null) {
+
+			// send notifications via email
 
 			if (o.next_email_blocked_ips.length > 0) {
 
@@ -159,7 +303,7 @@ exports.init = function(opts={}) {
 				}
 				s = s.substring(0, s.length-2);
 
-				// email the initial admin the list of expired accounts that were removed
+				// send notification
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
@@ -187,6 +331,7 @@ exports.init = function(opts={}) {
 				}
 				s = s.substring(0, s.length-2);
 
+				// send notification
 				o.mail.nodemailer_smtpTransport.sendMail({
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
@@ -210,7 +355,7 @@ exports.init = function(opts={}) {
 		// update the last cleanup
 		o.last_cleanup = Date.now();
 
-	}.bind({o: o}), o.cleanup_loop_seconds * 1000);
+	}, o.cleanup_loop_seconds * 1000);
 
 	// return the object
 	return o;
@@ -271,6 +416,23 @@ exports.test_ip_allowed = function(o, addr_string) {
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 
+	// test if the subnet is blocked
+	if (net.isIPv4(addr_string)) {
+	} else if (net.isIPv6(addr_string)) {
+
+		var ranked_groups = get_ranked_groups_ipv6(o, addr_string);
+
+		for (var s in ranked_groups) {
+			if (o.ipv6_subnets[s] !== undefined) {
+				if (o.ipv6_subnets[s].blockedMs !== undefined) {
+					// this subnet group is blocked
+					return false;
+				}
+			}
+		}
+
+	}
+
 	if (o.ips[addr_string] !== undefined) {
 
 		// a matching ip address has been found
@@ -300,6 +462,31 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 				// add to next email
 				o.next_email_blocked_ips.push(addr_string);
+
+			}
+
+			// get ip address as bytes
+			if (net.isIPv4(addr_string)) {
+
+			} else if (net.isIPv6(addr_string)) {
+
+				var ranked_groups = get_ranked_groups_ipv6(o, addr_string);
+
+				// add the ranked_groups to the subnet classifications
+				var a = 0;
+				while (a < ranked_groups.length) {
+
+					if (ipv6_subnets[ranked_groups[a]] !== undefined) {
+						// add one to the counter for this subnet group
+						o.ipv6_subnets[ranked_groups[a]].ip_bans++;
+					} else {
+						// it's new
+						o.ipv6_subnets[ranked_groups[a]] = {ip_bans: 1};
+					}
+
+					a++;
+
+				}
 
 			}
 
