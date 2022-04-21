@@ -192,6 +192,9 @@ exports.init = function(opts={}) {
 	o.last_cleanup = Date.now();
 	var cleanup = setInterval(function() {
 
+		// print everything about this node-ip-ac object
+		//console.log(o);
+
 		// consider the time since the last interval as that is when the last_cleanup value was set
 		var seconds_since_last_cleanup = (Date.now() - o.last_cleanup) / 1000;
 
@@ -207,6 +210,7 @@ exports.init = function(opts={}) {
 			// the age of this ip's last access in seconds
 			var age_of_ip = (Date.now() - o.ips[key].last_access)/1000;
 
+			// print each IP and it's age
 			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
 			//console.log(key, o.ips[key]);
 
@@ -311,7 +315,7 @@ exports.init = function(opts={}) {
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
 					subject: 'node-ip-ac blocked ' + o.next_email_blocked_ips.length + ' IP(s) on ' + o.mail.domain,
-					html: '<p>These IP address were blocked.</p><br /><p>' + s + '</p>'
+					html: '<p>These IP addresses were blocked.</p><br /><p>' + s + '</p>'
 				}, function(error, response) {
 					if (error) {
 						log_with_date('error sending email', error);
@@ -339,7 +343,7 @@ exports.init = function(opts={}) {
 					from: "ISPApp <" + o.mail.from + ">", // sender address
 					to: o.mail.to,
 					subject: 'node-ip-ac is reporting ' + o.next_email_absurd_ips.length + ' absurd authorization attempt(s) on ' + o.mail.domain,
-					html: '<p>These IP address tried to brute force or guess a login while there was an authenticated connection from the same IP.  It may be a malicious user or a malicious NAT (RFC1918) network.  They are not blocked.</p><br /><p>' + s + '</p>'
+					html: '<p>These IP addresses tried to brute force or guess a login while there was an authenticated connection from the same IP.  It may be a malicious user or a malicious NAT (RFC1918) network.</p><p><strong>The IP is not blocked</strong> because there is an authenticated IP connection from the same IP address.</p><br /><p>' + s + '</p>'
 				}, function(error, response) {
 					if (error) {
 						log_with_date('error sending email', error);
