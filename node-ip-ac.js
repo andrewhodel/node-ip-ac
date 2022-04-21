@@ -112,53 +112,16 @@ exports.init = function(opts={}) {
 	var o = {};
 
 	// default configurable options
-
-	// how many seconds between each iteration of the cleanup loop
+	// explained in README.md
 	o.cleanup_loop_seconds = 60;
-
-	// how many seconds to block an IP for
-	o.block_ip_for_seconds = 60 * 60 * 24;
-
-	// maximum depth to classify IPv6 is
-	// 64 bits of a network prefix and 64 bits of an interface identifier
-	// 64 bits is 4 groups that are 16 bits each
+	o.block_for_seconds = 60 * 60 * 24;
 	o.block_ipv6_subnets_group_depth = 4;
-
-	// the number of IP bans within a subnet group required for a subnet group to be blocked
 	o.block_ipv6_subnets_breach = 40;
-	// number of lowest level subnets to block
-	// multiplied by itself for each step back
-	//
-	// example values: depth 4 and breach 40
-	// example ip: 2404:3c00:c140:b3c0:5d43:d92e:7b4f:5d52
-	//
-	// 2404* blocked at 40*40*40*40 ips
-	// 2404:3c00* blocked at 40*40*40 ips
-	// 2404:3c00:c140* blocked at 40*40 ips
-	// 2404:3c00:c140:b3c0* blocked at 40 ips
-
-	// warn after N unauthorized new connections
-	// requests from these IP addresses should
-	// display a denial of service warning for the IP
-	// in the user interface
 	o.warn_after_new_connections = 80;
-
-	// block after N unauthorized new connections
 	o.block_after_new_connections = 600;
-
-	// block after N invalid authorization attempts
-	// this prevents login guessing many times from the same IP address
 	o.block_after_unauthed_attempts = 5;
-
-	// notify after N absurd auth attempts
-	// failed authorization attempts after the IP has been authorized
 	o.notify_after_absurd_auth_attempts = 20;
-
-	// send this object to send an email when an IP is blocked
-	// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 	o.mail = null;
-	o.next_email_blocked_ips = [];
-	o.next_email_absurd_ips = [];
 
 	if (typeof(opts.mail) == 'object') {
 		// make sure the object is valid
@@ -179,11 +142,12 @@ exports.init = function(opts={}) {
 	}
 
 	// set non configurable key/value pairs
+	o.next_email_blocked_ips = [];
+	o.next_email_absurd_ips = [];
 	o.ips = {};
-
 	o.ipv6_subnets = {};
 
-	// store the counts updated in the cleanup loop
+	// counts updated in the cleanup loop
 	o.total_count = 0;
 	o.blocked_count = 0;
 	o.warn_count = 0;
@@ -199,7 +163,7 @@ exports.init = function(opts={}) {
 		// consider the time since the last interval as that is when the last_cleanup value was set
 		var seconds_since_last_cleanup = (Date.now() - o.last_cleanup) / 1000;
 
-		var expire_older_than = o.block_ip_for_seconds - seconds_since_last_cleanup;
+		var expire_older_than = o.block_for_seconds - seconds_since_last_cleanup;
 
 		var ctotal = 0;
 		var cblocked = 0;
@@ -602,7 +566,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		entry.absurd_auth_attempts++;
 
-	} else if ((now - entry.last_access)/1000 > o.block_ip_for_seconds || authed === true) {
+	} else if ((now - entry.last_access)/1000 > o.block_for_seconds || authed === true) {
 		// authorized or expired
 		// reset the object keys
 		// this removes the requirement for waiting until the next cleanup iteration

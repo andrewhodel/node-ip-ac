@@ -36,8 +36,8 @@ Set these in the object {} passed as the first argument to `ipac.init();` if you
 // how many seconds between each iteration of the cleanup loop
 o.cleanup_loop_seconds = 60;
 
-// how many seconds to block an IP for
-o.block_ip_for_seconds = 60 * 60 * 24;
+// how many seconds to ban/block entities for
+o.block_for_seconds = 60 * 60 * 24;
 
 // maximum depth to classify IPv6 is
 // 64 bits of a network prefix and 64 bits of an interface identifier
@@ -76,7 +76,7 @@ o.notify_after_absurd_auth_attempts = 20;
 
 // send this object to send an email notification regarding
 // new IP addresses were banned
-// new IP addresses breached the absurd_auth_attempts limit
+// new IP addresses exceeded the absurd_auth_attempts limit
 // a new subnet was blocked
 
 // {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
@@ -88,7 +88,7 @@ o.mail = null;
 You may want the total counts.
 
 ```javascript
-// count of IP Addresses that have connected in the last ip_ac.block_ip_for_seconds
+// count of IP Addresses that have connected in the last ip_ac.block_for_seconds
 ip_ac.total_count;
 
 // count of IP Addresses that are blocked
