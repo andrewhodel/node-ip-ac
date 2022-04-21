@@ -93,6 +93,9 @@ ip_ac.blocked_count;
 
 // count of IP Addresses that are warned
 ip_ac.warn_count;
+
+// count of subnets that are blocked
+ip_ac.blocked_subnet_count;
 ```
 
 ## firewall support

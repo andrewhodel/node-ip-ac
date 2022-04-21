@@ -187,6 +187,7 @@ exports.init = function(opts={}) {
 	o.total_count = 0;
 	o.blocked_count = 0;
 	o.warn_count = 0;
+	o.blocked_subnet_count = 0;
 
 	// start the cleanup routine
 	o.last_cleanup = Date.now();
@@ -203,6 +204,7 @@ exports.init = function(opts={}) {
 		var ctotal = 0;
 		var cblocked = 0;
 		var cwarn = 0;
+		var cblocked_subnet = 0;
 
 		// clear expired ips
 		for (var key in o.ips) {
@@ -258,6 +260,9 @@ exports.init = function(opts={}) {
 					// unblock this subnet group
 					ipv6_modify_subnet_block_os(false, s);
 					delete o.ipv6_subnets[s];
+				} else {
+					// increment the blocked subnet count for this cleanup() loop
+					cblocked_subnet++;
 				}
 
 				continue;
@@ -274,6 +279,9 @@ exports.init = function(opts={}) {
 				// block it
 				ipv6_modify_subnet_block_os(true, s);
 				o.ipv6_subnets[s].blockedMs = Date.now();
+
+				// increment the blocked subnet count for this cleanup() loop
+				cblocked_subnet++;
 
 				if (o.mail !== null) {
 
@@ -296,6 +304,9 @@ exports.init = function(opts={}) {
 			}
 
 		}
+
+		// update the ipac object
+		o.blocked_subnet_count = cblocked_subnet;
 
 		if (o.mail !== null) {
 
