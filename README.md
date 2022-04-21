@@ -74,8 +74,11 @@ o.block_after_unauthed_attempts = 5;
 // failed authorization attempts after the IP has been authorized
 o.notify_after_absurd_auth_attempts = 20;
 
-// send this object to send an email when an IP is blocked
-// or the absurd_auth_attempts limit is breached
+// send this object to send an email notification regarding
+// new IP addresses were banned
+// new IP addresses breached the absurd_auth_attempts limit
+// a new subnet was blocked
+
 // {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 o.mail = null;
 ```
