@@ -305,8 +305,10 @@ exports.init = function(opts={}) {
 
 				// generate the string of IPs for the email body
 				var s = '';
-				for (var n in o.next_email_blocked_ips) {
+				var n = 0;
+				while (n < o.next_email_blocked_ips.length) {
 					s += o.next_email_blocked_ips[n] + ', ';
+					n++;
 				}
 				s = s.substring(0, s.length-2);
 
@@ -333,8 +335,10 @@ exports.init = function(opts={}) {
 
 				// generate the string of IPs for the email body
 				var s = '';
-				for (var n in o.next_email_absurd_ips) {
+				var n = 0;
+				while (n < o.next_email_absurd_ips.length) {
 					s += o.next_email_absurd_ips[n] + ', ';
+					n++;
 				}
 				s = s.substring(0, s.length-2);
 
