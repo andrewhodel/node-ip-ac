@@ -24,7 +24,7 @@ var default_entry = function() {
 
 }
 
-var get_ranked_groups_ipv6 = function(o, addr_string) {
+var ipv6_get_ranked_groups = function(o, addr_string) {
 
 	// split groups
 	var groups = addr_string.split(':');
@@ -252,6 +252,7 @@ exports.init = function(opts={}) {
 
 				if (age_of_block > expire_older_than) {
 					// unblock this subnet group
+					ipv6_modify_subnet_block_os(false, s);
 					delete o.ipv6_subnets[s];
 				}
 
@@ -267,6 +268,7 @@ exports.init = function(opts={}) {
 
 				// this subnet group has breached the limit
 				// block it
+				ipv6_modify_subnet_block_os(true, s);
 				o.ipv6_subnets[s].blockedMs = Date.now();
 
 				if (o.mail !== null) {
@@ -363,13 +365,58 @@ exports.init = function(opts={}) {
 
 }
 
+var ipv6_modify_subnet_block_os = function(block, subnet_string) {
+	// block or unblock the subnet at the OS level
+
+	// make 'ffff' or 'ffff:ffff' be a full ipv6 subnet specificed with zeroes instead of CIDR
+	// ffff:0000:0000:0000:0000:0000:0000:0000
+	// ffff:ffff:0000:0000:0000:0000:0000:0000
+	var groups = subnet_string.split(':');
+
+	var total = 8;
+	var c = 0;
+	var iptables_subnet_string = '';
+	while (c < total) {
+
+		if (typeof(groups[c]) == 'undefined') {
+			iptables_subnet_string += '0000:';
+		} else {
+			iptables_subnet_string += groups[c] + ':';
+		}
+
+		c++;
+
+	}
+
+	// remove the last :
+	iptables_subnet_string = iptables_subnet_string.substring(0, iptables_subnet_string.length-1);
+
+	if (block) {
+
+		// block the subnet
+		if (os.platform() == 'linux') {
+			cp.exec('sudo iptables -I nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			});
+		}
+
+	} else {
+
+		// unblock the subnet
+		if (os.platform() == 'linux') {
+			cp.exec('sudo iptables -D nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			});
+		}
+
+	}
+
+}
+
 var modify_ip_block_os = function(block, addr_string) {
 	// block or unblock the IP at the OS level
 
 	if (block) {
 
 		// block the IP address
-
 		if (os.platform() == 'linux') {
 			cp.exec('sudo iptables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
 			});
@@ -378,7 +425,6 @@ var modify_ip_block_os = function(block, addr_string) {
 	} else {
 
 		// unblock the IP address
-
 		if (os.platform() == 'linux') {
 			cp.exec('sudo iptables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
 			});
@@ -417,23 +463,6 @@ exports.test_ip_allowed = function(o, addr_string) {
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 
-	// test if the subnet is blocked
-	if (net.isIPv4(addr_string)) {
-	} else if (net.isIPv6(addr_string)) {
-
-		var ranked_groups = get_ranked_groups_ipv6(o, addr_string);
-
-		for (var s in ranked_groups) {
-			if (o.ipv6_subnets[s] !== undefined) {
-				if (o.ipv6_subnets[s].blockedMs !== undefined) {
-					// this subnet group is blocked
-					return false;
-				}
-			}
-		}
-
-	}
-
 	if (o.ips[addr_string] !== undefined) {
 
 		// a matching ip address has been found
@@ -471,7 +500,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			} else if (net.isIPv6(addr_string)) {
 
-				var ranked_groups = get_ranked_groups_ipv6(o, addr_string);
+				var ranked_groups = ipv6_get_ranked_groups(o, addr_string);
 
 				// add the ranked_groups to the subnet classifications
 				var a = 0;
