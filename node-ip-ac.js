@@ -489,7 +489,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 				var a = 0;
 				while (a < ranked_groups.length) {
 
-					if (ipv6_subnets[ranked_groups[a]] !== undefined) {
+					if (o.ipv6_subnets[ranked_groups[a]] !== undefined) {
 						// add one to the counter for this subnet group
 						o.ipv6_subnets[ranked_groups[a]].ip_bans++;
 					} else {
