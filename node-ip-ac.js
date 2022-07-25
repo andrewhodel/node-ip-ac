@@ -122,6 +122,7 @@ exports.init = function(opts={}) {
 	o.block_after_unauthed_attempts = 5;
 	o.notify_after_absurd_auth_attempts = 20;
 	o.mail = null;
+	o.purge = false;
 
 	if (typeof(opts.mail) == 'object') {
 		// make sure the object is valid
@@ -173,6 +174,12 @@ exports.init = function(opts={}) {
 		// clear expired ips
 		for (var key in o.ips) {
 
+			if (o.purge === true) {
+				// clear ip
+				delete o.ips[key];
+				continue;
+			}
+
 			// the age of this ip's last access in seconds
 			var age_of_ip = (Date.now() - o.ips[key].last_access)/1000;
 
@@ -213,6 +220,12 @@ exports.init = function(opts={}) {
 		// o.block_ipv6_subnets_group_depth
 		// o.block_ipv6_subnets_breach
 		for (s in o.ipv6_subnets) {
+
+			if (o.purge === true) {
+				// clear subnet
+				delete o.ipv6_subnets[s];
+				continue;
+			}
 
 			if (o.ipv6_subnets[s].blockedMs !== undefined) {
 				// this subnet group is blocked
@@ -271,6 +284,11 @@ exports.init = function(opts={}) {
 
 		// update the ipac object
 		o.blocked_subnet_count = cblocked_subnet;
+
+		if (o.purge === true) {
+			// reset o.purge
+			o.purge = false;
+		}
 
 		if (o.mail !== null) {
 
@@ -537,7 +555,19 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 }
 
+exports.purge = function(o) {
+
+	// clear all ips
+	o.purge = true;
+
+}
+
 exports.modify_auth = function(o, authed, addr_string) {
+
+	if (o.purge === true) {
+		// do not allow modification while purging
+		return;
+	}
 
 	// modify the authorization status
 	// via the authed argument for the IP address in addr_string
