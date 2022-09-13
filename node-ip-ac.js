@@ -118,8 +118,9 @@ exports.init = function(opts={}) {
 	o.block_ipv6_subnets_group_depth = 4;
 	o.block_ipv6_subnets_breach = 40;
 	o.warn_after_new_connections = 80;
+	o.warn_after_unauthed_attempts = 5;
 	o.block_after_new_connections = 600;
-	o.block_after_unauthed_attempts = 5;
+	o.block_after_unauthed_attempts = 300;
 	o.notify_after_absurd_auth_attempts = 20;
 	o.mail = null;
 	o.purge = false;
@@ -474,8 +475,12 @@ exports.test_ip_allowed = function(o, addr_string) {
 			entry.unauthed_new_connections++;
 		}
 
-		// warn this IP address if it has made too many unauthed connections
+		// warn this IP address if required
 		if (entry.unauthed_new_connections >= o.warn_after_new_connections && entry.warn === false) {
+			// made too many unauthed connections
+			entry.warn = true;
+		} else if (entry.unauthed_attempts >= o.warn_after_unauthed_attempts && entry.warn === false) {
+			// made too make unauthed attempts
 			entry.warn = true;
 		}
 
