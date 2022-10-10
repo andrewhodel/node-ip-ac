@@ -16,82 +16,6 @@ var os = require('os');
 var cp = require('child_process');
 var net = require('net');
 
-// this is a default entry
-// for new (first time connections or logins)
-var default_entry = function() {
-
-	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
-
-}
-
-var ipv6_get_ranked_groups = function(o, addr_string) {
-
-	// split groups
-	var groups = addr_string.split(':');
-
-	var all = [];
-	for (var g in groups) {
-		all.push(groups[g]);
-	}
-
-	//console.log('all', all);
-
-	// create ranked groups
-	var ranked_groups = [];
-
-	var at = 0;
-
-	var g = 0;
-	while (g < all.length) {
-		ranked_groups.push(all[at]);
-
-		if (g === o.block_ipv6_subnets_group_depth-1) {
-			// what size to classify groups by
-			break;
-		}
-
-		g++;
-
-	}
-
-	//console.log('ranked_groups', ranked_groups);
-
-	var a = 0;
-	while (a < all.length) {
-
-		if (a === o.block_ipv6_subnets_group_depth) {
-			// what size to classify groups by
-			break;
-		}
-
-		at++;
-		var gl = 0;
-		while (gl < all.length) {
-
-			if (gl === o.block_ipv6_subnets_group_depth) {
-				// what size to classify groups by
-				break;
-			}
-
-			if (gl < at) {
-				gl++;
-				continue;
-			}
-
-			ranked_groups[gl] += ':' + all[at];
-
-			gl++;
-
-		}
-
-		a++;
-
-	}
-
-	return ranked_groups;
-
-}
-
 exports.init = function(opts={}) {
 
 	// remove existing firewall rules created by node-ip-ac
@@ -365,6 +289,82 @@ exports.init = function(opts={}) {
 
 }
 
+// this is a default entry
+// for new (first time connections or logins)
+var default_entry = function() {
+
+	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
+
+}
+
+var ipv6_get_ranked_groups = function(o, addr_string) {
+
+	// split groups
+	var groups = addr_string.split(':');
+
+	var all = [];
+	for (var g in groups) {
+		all.push(groups[g]);
+	}
+
+	//console.log('all', all);
+
+	// create ranked groups
+	var ranked_groups = [];
+
+	var at = 0;
+
+	var g = 0;
+	while (g < all.length) {
+		ranked_groups.push(all[at]);
+
+		if (g === o.block_ipv6_subnets_group_depth-1) {
+			// what size to classify groups by
+			break;
+		}
+
+		g++;
+
+	}
+
+	//console.log('ranked_groups', ranked_groups);
+
+	var a = 0;
+	while (a < all.length) {
+
+		if (a === o.block_ipv6_subnets_group_depth) {
+			// what size to classify groups by
+			break;
+		}
+
+		at++;
+		var gl = 0;
+		while (gl < all.length) {
+
+			if (gl === o.block_ipv6_subnets_group_depth) {
+				// what size to classify groups by
+				break;
+			}
+
+			if (gl < at) {
+				gl++;
+				continue;
+			}
+
+			ranked_groups[gl] += ':' + all[at];
+
+			gl++;
+
+		}
+
+		a++;
+
+	}
+
+	return ranked_groups;
+
+}
+
 var ipv6_modify_subnet_block_os = function(block, subnet_string) {
 	// block or unblock the subnet at the OS level
 
@@ -478,7 +478,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 			// made too many unauthed connections
 			entry.warn = true;
 		} else if (entry.unauthed_attempts >= o.warn_after_unauthed_attempts && entry.warn === false) {
-			// made too make unauthed attempts
+			// made too many invalid authorization attempts
 			entry.warn = true;
 		}
 
@@ -526,7 +526,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		} else if (entry.absurd_auth_attempts === o.notify_after_absurd_auth_attempts) {
 
-			// this will only happen once as it is === not >
+			// too many auth attempts while the IP has an authenticated session, send an email
 
 			if (o.mail !== null) {
 
@@ -542,7 +542,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 	} else {
 
-		// this IP address is new to the access control system
+		// this IP address is new
 		o.ips[addr_string] = default_entry();
 
 	}
