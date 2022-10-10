@@ -172,14 +172,13 @@ exports.init = function(opts={}) {
 		var cwarn = 0;
 		var cblocked_subnet = 0;
 
+		if (o.purge === true) {
+			// clear ips
+			o.ips = {};
+		}
+
 		// clear expired ips
 		for (var key in o.ips) {
-
-			if (o.purge === true) {
-				// clear ip
-				delete o.ips[key];
-				continue;
-			}
 
 			// the age of this ip's last access in seconds
 			var age_of_ip = (Date.now() - o.ips[key].last_access)/1000;
@@ -215,18 +214,17 @@ exports.init = function(opts={}) {
 		o.blocked_count = cblocked;
 		o.warn_count = cwarn;
 
+		if (o.purge === true) {
+			// clear subnets
+			o.ipv6_subnets = {};
+		}
+
 		// handle subnet group blocks with
 		//
 		// o.ipv6_subnets
 		// o.block_ipv6_subnets_group_depth
 		// o.block_ipv6_subnets_breach
 		for (s in o.ipv6_subnets) {
-
-			if (o.purge === true) {
-				// clear subnet
-				delete o.ipv6_subnets[s];
-				continue;
-			}
 
 			if (o.ipv6_subnets[s].blockedMs !== undefined) {
 				// this subnet group is blocked
