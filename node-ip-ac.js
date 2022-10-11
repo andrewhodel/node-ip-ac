@@ -169,11 +169,7 @@ exports.init = function(opts={}) {
 
 			}
 
-			var groups = s.split(':');
-
-			var group_breach = o.block_ipv6_subnets_breach * (o.block_ipv6_subnets_group_depth + 1 - groups.length);
-
-			if (o.ipv6_subnets[s].ip_bans === group_breach) {
+			if (o.ipv6_subnets[s].ip_bans >= o.block_ipv6_subnets_breach) {
 
 				// this subnet group has breached the limit
 				// block it
