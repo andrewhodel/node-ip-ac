@@ -299,65 +299,56 @@ var default_entry = function() {
 
 var ipv6_get_ranked_groups = function(o, addr_string) {
 
+	// get each ranked group after o.BlockIpv6SubnetsGroupDepth
+	// if addr is ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+	// and o.BlockIpv6SubnetsGroupDepth is 4
+	// return
+	// ffff:ffff:ffff:ffff
+	// ffff:ffff:ffff:ffff:ffff
+	// ffff:ffff:ffff:ffff:ffff:ffff
+	// ffff:ffff:ffff:ffff:ffff:ffff:ffff
+	// to match by these prefixes as ipv6 subnets quickly
+
 	// split groups
 	var groups = addr_string.split(':');
-
-	var all = [];
-	for (var g in groups) {
-		all.push(groups[g]);
-	}
-
-	//console.log('all', all);
 
 	// create ranked groups
 	var ranked_groups = [];
 
 	var at = 0;
-
 	var g = 0;
-	while (g < all.length) {
-		ranked_groups.push(all[at]);
 
-		if (g === o.block_ipv6_subnets_group_depth-1) {
-			// what size to classify groups by
-			break;
+	while (g < o.block_ipv6_subnets_group_depth) {
+
+		var prefix = '';
+
+		var l = 0;
+		while (l < o.block_ipv6_subnets_group_depth) {
+			// add first to `o.BlockIpv6SubnetsGroupDepth` strings of `groups`
+			prefix += groups[l] + ':';
+			l++;
 		}
+
+		// remove the last :
+		prefix = prefix.slice(0, prefix.length-1);
+
+		l = 0;
+		while (l < at) {
+			// then `o.BlockIpv6SubnetsGroupDepth` to `o.BlockIpv6SubnetsGroupDepth+at` strings of `groups`
+			prefix += groups[l + o.block_ipv6_subnets_group_depth] + ':';
+			l++;
+		}
+
+		// remove the last :
+		prefix = prefix.slice(0, prefix.length-1);
+
+		// add to ranked_groups
+		ranked_groups.push(prefix);
+
+		// increment at
+		at++;
 
 		g++;
-
-	}
-
-	//console.log('ranked_groups', ranked_groups);
-
-	var a = 0;
-	while (a < all.length) {
-
-		if (a === o.block_ipv6_subnets_group_depth) {
-			// what size to classify groups by
-			break;
-		}
-
-		at++;
-		var gl = 0;
-		while (gl < all.length) {
-
-			if (gl === o.block_ipv6_subnets_group_depth) {
-				// what size to classify groups by
-				break;
-			}
-
-			if (gl < at) {
-				gl++;
-				continue;
-			}
-
-			ranked_groups[gl] += ':' + all[at];
-
-			gl++;
-
-		}
-
-		a++;
 
 	}
 
