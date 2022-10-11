@@ -144,10 +144,6 @@ exports.init = function(opts={}) {
 		}
 
 		// handle subnet group blocks with
-		//
-		// o.ipv6_subnets
-		// o.block_ipv6_subnets_group_depth
-		// o.block_ipv6_subnets_breach
 		for (s in o.ipv6_subnets) {
 
 			if (o.ipv6_subnets[s].blockedMs !== undefined) {
@@ -169,7 +165,17 @@ exports.init = function(opts={}) {
 
 			}
 
-			if (o.ipv6_subnets[s].ip_bans >= o.block_ipv6_subnets_breach) {
+			// calculate the number of banned ips required for this prefix to be blocked
+			// block_ipv6_subnets_group_depth = 4
+			// block_ipv6_subnets_breach = 40
+			// pow(40, 4 - num_of_groups + 1)
+			// ffff = pow(40, 4)
+			// ffff:ffff = pow(40, 3)
+			// ffff:ffff:ffff = pow(40, 2)
+			// ffff:ffff:ffff:ffff = pow(40, 1)
+			var ip_count_to_breach_subnet = Math.pow(o.block_ipv6_subnets_breach, o.block_ipv6_subnets_group_depth - s.split(':').length + 1)
+
+			if (o.ipv6_subnets[s].ip_bans >= ip_count_to_breach_subnet) {
 
 				// this subnet group has breached the limit
 				// block it
