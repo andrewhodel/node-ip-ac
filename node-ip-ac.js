@@ -427,7 +427,21 @@ var modify_ip_block_os = function(block, addr_string) {
 
 }
 
+var clean_ip_string = function(a) {
+
+	if (a.indexOf('::ffff:') === 0) {
+		// remove ::ffff: and return string
+		// node makes ipv4 addresses this way
+		return a.slice(7);
+	} else {
+		return a;
+	}
+
+}
+
 exports.ip_details = function(o, addr_string) {
+
+	addr_string = clean_ip_string(addr_string);
 
 	var i = default_entry();
 
@@ -441,6 +455,8 @@ exports.ip_details = function(o, addr_string) {
 
 exports.test_ip_warn = function(o, addr_string) {
 
+	addr_string = clean_ip_string(addr_string);
+
 	var warn = false;
 
 	if (typeof(o.ips[addr_string]) == 'object') {
@@ -452,6 +468,9 @@ exports.test_ip_warn = function(o, addr_string) {
 }
 
 exports.test_ip_allowed = function(o, addr_string) {
+
+	addr_string = clean_ip_string(addr_string);
+
 	// always ran at the start of any request
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
@@ -559,6 +578,8 @@ exports.purge = function(o) {
 }
 
 exports.modify_auth = function(o, authed, addr_string) {
+
+	addr_string = clean_ip_string(addr_string);
 
 	if (o.purge === true) {
 		// do not allow modification while purging
