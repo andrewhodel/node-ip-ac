@@ -441,6 +441,13 @@ var clean_ip_string = function(a) {
 
 exports.ip_details = function(o, addr_string) {
 
+	if (addr_string === undefined) {
+		// nodejs has a bug in the net module that allows a request object to have an undefined remoteAddress field
+		// but they have blocked @andrewhodel from https://github.com/nodejs/node
+		// to prevent me from helping
+		return;
+	}
+
 	addr_string = clean_ip_string(addr_string);
 
 	var i = default_entry();
@@ -455,6 +462,13 @@ exports.ip_details = function(o, addr_string) {
 
 exports.test_ip_warn = function(o, addr_string) {
 
+	if (addr_string === undefined) {
+		// nodejs has a bug in the net module that allows a request object to have an undefined remoteAddress field
+		// but they have blocked @andrewhodel from https://github.com/nodejs/node
+		// to prevent me from helping
+		return true;
+	}
+
 	addr_string = clean_ip_string(addr_string);
 
 	var warn = false;
@@ -468,6 +482,13 @@ exports.test_ip_warn = function(o, addr_string) {
 }
 
 exports.test_ip_allowed = function(o, addr_string) {
+
+	if (addr_string === undefined) {
+		// nodejs has a bug in the net module that allows a request object to have an undefined remoteAddress field
+		// but they have blocked @andrewhodel from https://github.com/nodejs/node
+		// to prevent me from helping
+		return false;
+	}
 
 	addr_string = clean_ip_string(addr_string);
 
@@ -578,6 +599,13 @@ exports.purge = function(o) {
 }
 
 exports.modify_auth = function(o, authed, addr_string) {
+
+	if (addr_string === undefined) {
+		// nodejs has a bug in the net module that allows a request object to have an undefined remoteAddress field
+		// but they have blocked @andrewhodel from https://github.com/nodejs/node
+		// to prevent me from helping
+		return;
+	}
 
 	addr_string = clean_ip_string(addr_string);
 
