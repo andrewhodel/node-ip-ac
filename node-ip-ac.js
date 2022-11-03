@@ -44,7 +44,7 @@ exports.init = function(opts={}) {
 	o.warn_after_new_connections = 80;
 	o.warn_after_unauthed_attempts = 5;
 	o.block_after_new_connections = 600;
-	o.block_after_unauthed_attempts = 300;
+	o.block_after_unauthed_attempts = 30;
 	o.notify_after_absurd_auth_attempts = 20;
 	o.mail = null;
 	o.purge = false;

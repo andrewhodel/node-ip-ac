@@ -68,7 +68,7 @@ o.block_after_new_connections = 600;
 
 // block after N invalid authorization attempts
 // this prevents login guessing many times from the same IP address
-o.block_after_unauthed_attempts = 5;
+o.block_after_unauthed_attempts = 30;
 
 // notify after N absurd auth attempts
 // failed authorization attempts after the IP has been authorized
