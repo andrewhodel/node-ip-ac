@@ -522,6 +522,9 @@ exports.test_ip_allowed = function(o, addr_string) {
 			// set the IP address to blocked
 			entry.blocked = true;
 
+			// update the entry in memory
+			o.ips[addr_string] = entry;
+
 			// block this IP at the OS level
 			modify_ip_block_os(true, addr_string);
 
