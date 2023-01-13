@@ -8,11 +8,11 @@ var ipac = require('node-ip-ac/node-ip-ac.js');
 var ip_ac = ipac.init();
 
 // set authorization status for an IP
-// reset (use this on invalid authorization attempts)
+// logout
 ipac.modify_auth(ip_ac, undefined, '127.0.0.1');
-// failed/unauthorized (use this on valid logouts)
+// invalid login credentials
 ipac.modify_auth(ip_ac, false, '127.0.0.1');
-// authorized (use this on valid logins)
+// authorized (valid login credentials)
 ipac.modify_auth(ip_ac, true, '127.0.0.1');
 
 // test authorization status for an IP

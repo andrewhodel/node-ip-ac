@@ -645,24 +645,29 @@ exports.modify_auth = function(o, authed, addr_string) {
 		entry.absurd_auth_attempts++;
 
 	} else if ((now - entry.last_access)/1000 > o.block_for_seconds || authed === true) {
+
 		// authorized or expired
 		// reset the object keys
-		// this removes the requirement for waiting until the next cleanup iteration
-		// as the whole functionality may be executed during that time
-		// and an authorized attempt must reset that possibility
-		entry.unauthed_attempts = 0;
-		entry.unauthed_new_connections = 0;
-		entry.absurd_auth_attempts = 0;
+
+		// removes the requirement for waiting until the next cleanup iteration
+
 		entry.blocked = false;
 		entry.warn = false;
 
 		if (authed) {
+			// authorized
 			entry.authed = true;
+		} else {
+			// expired
+			// only reset these counters when modify_auth is resetting an expired IP address
+			entry.unauthed_attempts = 0;
+			entry.unauthed_new_connections = 0;
+			entry.absurd_auth_attempts = 0;
 		}
 
 	} else if (authed === false) {
 
-		// not authorized or expired
+		// not authorized, not expired
 
 		// increment the invalid authorization attempts counter for the IP address
 		entry.unauthed_attempts++;
