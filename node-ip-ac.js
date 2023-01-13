@@ -599,6 +599,14 @@ exports.purge = function(o) {
 	// clear all ips
 	o.purge = true;
 
+	if (os.platform() == 'linux') {
+		// flush the nodeipac chain
+		cp.exec('sudo iptables -F nodeipac', {}, function(error, stdout, stderr) {
+		});
+	}
+
+	var o = {};
+
 }
 
 exports.modify_auth = function(o, authed, addr_string) {
