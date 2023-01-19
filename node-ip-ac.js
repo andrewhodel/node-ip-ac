@@ -48,6 +48,7 @@ exports.init = function(opts={}) {
 	o.notify_after_absurd_auth_attempts = 20;
 	o.mail = null;
 	o.purge = false;
+	o.never_block = false;
 
 	if (typeof(opts.mail) == 'object') {
 		// make sure the object is valid
@@ -490,6 +491,11 @@ exports.test_ip_allowed = function(o, addr_string) {
 		return false;
 	}
 
+	if (o.never_block === true) {
+		// firewall is disabled
+		return true;
+	}
+
 	addr_string = clean_ip_string(addr_string);
 
 	// always ran at the start of any request
@@ -616,6 +622,11 @@ exports.modify_auth = function(o, authed, addr_string) {
 		// but they have blocked @andrewhodel from https://github.com/nodejs/node
 		// to prevent me from helping
 		return;
+	}
+
+	if (o.never_block === true) {
+		// firewall is disabled
+		return true;
 	}
 
 	addr_string = clean_ip_string(addr_string);

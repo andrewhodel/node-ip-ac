@@ -81,6 +81,9 @@ o.notify_after_absurd_auth_attempts = 20;
 
 // {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
 o.mail = null;
+
+// never block, to disable the firewall
+o.never_block = false;
 ```
 
 ## counts
