@@ -188,7 +188,7 @@ exports.init = function(opts={}) {
 				if (o.notify_cb !== null) {
 
 					// send notification
-					o.notify_cb('IPV6 subnet blocked.', [s]);
+					o.notify_cb('IPv6 subnet blocked.', [s]);
 
 				}
 
