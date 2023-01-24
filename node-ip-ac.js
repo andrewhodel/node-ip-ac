@@ -50,9 +50,9 @@ exports.init = function(opts={}) {
 	o.purge = false;
 	o.never_block = false;
 
-	if (opts.notify_cb !== null) {
+	if (opts.notify_cb !== undefined) {
 		if (typeof(opts.notify_cb) !== 'function') {
-			console.log('node-ip-ac init(opts), opts.notify_cb must be a function or null.');
+			console.log('node-ip-ac init(opts), opts.notify_cb must be a function or undefined.');
 			process.exit(1);
 		}
 	}
