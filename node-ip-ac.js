@@ -46,14 +46,13 @@ exports.init = function(opts={}) {
 	o.block_after_new_connections = 600;
 	o.block_after_unauthed_attempts = 30;
 	o.notify_after_absurd_auth_attempts = 20;
-	o.mail = null;
+	o.notify_cb = null;
 	o.purge = false;
 	o.never_block = false;
 
-	if (typeof(opts.mail) == 'object') {
-		// make sure the object is valid
-		if (typeof(opts.mail.nodemailer_smtpTransport) == 'undefined' || typeof(opts.mail.from) == 'undefined' || typeof(opts.mail.to) == 'undefined' || typeof(opts.mail.domain) == 'undefined') {
-			console.log('node-ip-ac init() function first argument\'s mail object requires 4 fields:\n\tnodemailer_smtpTransport: nodemailer.createTransport({})\n\tfrom: "user@domain.tld"\n\tto: "user@domain.tld"\n\tdomain: "domain or ip address"');
+	if (opts.notify_cb !== null) {
+		if (typeof(opts.notify_cb) !== 'function') {
+			console.log('node-ip-ac init(opts), opts.notify_cb must be a function or null.');
 			process.exit(1);
 		}
 	}
@@ -69,8 +68,8 @@ exports.init = function(opts={}) {
 	}
 
 	// set non configurable key/value pairs
-	o.next_email_blocked_ips = [];
-	o.next_email_absurd_ips = [];
+	o.next_notify_blocked_ips = [];
+	o.next_notify_absurd_ips = [];
 	o.ips = {};
 	o.ipv6_subnets = {};
 
@@ -186,21 +185,10 @@ exports.init = function(opts={}) {
 				// increment the blocked subnet count for this cleanup() loop
 				cblocked_subnet++;
 
-				if (o.mail !== null) {
+				if (o.notify_cb !== null) {
 
 					// send notification
-					o.mail.nodemailer_smtpTransport.sendMail({
-						from: "ISPApp <" + o.mail.from + ">", // sender address
-						to: o.mail.to,
-						subject: 'node-ip-ac blocked subnet group ' + s + ' on ' + o.mail.domain,
-						html: '<p>This subnet group was blocked.</p><br /><p>' + s + '</p>'
-					}, function(error, response) {
-						if (error) {
-							log_with_date('error sending email', error);
-						} else {
-							//log_with_date("Message sent: " + response.message);
-						}
-					});
+					o.notify_cb('IPV6 subnet blocked.', [s]);
 
 				}
 
@@ -216,67 +204,25 @@ exports.init = function(opts={}) {
 			o.purge = false;
 		}
 
-		if (o.mail !== null) {
+		if (o.notify_cb !== null) {
 
-			// send notifications via email
-
-			if (o.next_email_blocked_ips.length > 0) {
-
-				// generate the string of IPs for the email body
-				var s = '';
-				var n = 0;
-				while (n < o.next_email_blocked_ips.length) {
-					s += o.next_email_blocked_ips[n] + ', ';
-					n++;
-				}
-				s = s.substring(0, s.length-2);
+			if (o.next_notify_blocked_ips.length > 0) {
 
 				// send notification
-				o.mail.nodemailer_smtpTransport.sendMail({
-					from: "ISPApp <" + o.mail.from + ">", // sender address
-					to: o.mail.to,
-					subject: 'node-ip-ac blocked ' + o.next_email_blocked_ips.length + ' IP(s) on ' + o.mail.domain,
-					html: '<p>These IP addresses were blocked.</p><br /><p>' + s + '</p>'
-				}, function(error, response) {
-					if (error) {
-						log_with_date('error sending email', error);
-					} else {
-						//log_with_date("Message sent: " + response.message);
-					}
-				});
+				o.notify_cb('IP addresses blocked.', o.next_notify_blocked_ips);
 
 				// reset it
-				o.next_email_blocked_ips = [];
+				o.next_notify_blocked_ips = [];
 
 			}
 
-			if (o.next_email_absurd_ips.length > 0) {
-
-				// generate the string of IPs for the email body
-				var s = '';
-				var n = 0;
-				while (n < o.next_email_absurd_ips.length) {
-					s += o.next_email_absurd_ips[n] + ', ';
-					n++;
-				}
-				s = s.substring(0, s.length-2);
+			if (o.next_notify_absurd_ips.length > 0) {
 
 				// send notification
-				o.mail.nodemailer_smtpTransport.sendMail({
-					from: "ISPApp <" + o.mail.from + ">", // sender address
-					to: o.mail.to,
-					subject: 'node-ip-ac is reporting ' + o.next_email_absurd_ips.length + ' absurd authorization attempt(s) on ' + o.mail.domain,
-					html: '<p>These IP addresses tried to brute force or guess a login while there was an authenticated connection from the same IP.  It may be a malicious user or a malicious NAT (RFC1918) network.</p><p><strong>The IP is not blocked</strong> because there is an authenticated IP connection from the same IP address.</p><br /><p>' + s + '</p>'
-				}, function(error, response) {
-					if (error) {
-						log_with_date('error sending email', error);
-					} else {
-						//log_with_date("Message sent: " + response.message);
-					}
-				});
+				o.notify_cb('Too many failed login attempts from IP Addresses that are already authenticated.', o.next_notify_absurd_ips);
 
 				// reset it
-				o.next_email_absurd_ips = [];
+				o.next_notify_absurd_ips = [];
 
 			}
 
@@ -534,10 +480,10 @@ exports.test_ip_allowed = function(o, addr_string) {
 			// block this IP at the OS level
 			modify_ip_block_os(true, addr_string);
 
-			if (o.mail !== null) {
+			if (o.notify_cb !== null) {
 
-				// add to next email
-				o.next_email_blocked_ips.push(addr_string);
+				// add to next notify
+				o.next_notify_blocked_ips.push(addr_string);
 
 			}
 
@@ -568,12 +514,12 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		} else if (entry.absurd_auth_attempts === o.notify_after_absurd_auth_attempts) {
 
-			// too many auth attempts while the IP has an authenticated session, send an email
+			// too many auth attempts while the IP has an authenticated session
 
-			if (o.mail !== null) {
+			if (o.notify_cb !== null) {
 
-				// add to next email
-				o.next_email_absurd_ips.push(addr_string);
+				// add to next notify
+				o.next_notify_absurd_ips.push(addr_string);
 
 			}
 

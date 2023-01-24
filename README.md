@@ -74,13 +74,12 @@ o.block_after_unauthed_attempts = 30;
 // failed authorization attempts after the IP has been authorized
 o.notify_after_absurd_auth_attempts = 20;
 
-// send this object to send an email notification regarding
-// new IP addresses were banned
-// new IP addresses exceeded the absurd_auth_attempts limit
-// a new subnet was blocked
-
-// {nodemailer_smtpTransport: nodemailer.createTransport({}), from: 'user@domain.tld', to: 'user@domain.tls', domain: 'domain or ip address'}
-o.mail = null;
+// event notification callback
+o.notify_cb = function(info, ips)
+// use info:string and ips:array[string] to notify users of firewall changes
+// IP addresses were blocked
+// IP addresses exceeded the absurd_auth_attempts limit
+// IPv6 subnet was blocked
 
 // never block, to disable the firewall
 o.never_block = false;
