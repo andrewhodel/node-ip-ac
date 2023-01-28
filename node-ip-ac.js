@@ -46,6 +46,7 @@ exports.init = function(opts={}) {
 	o.block_after_new_connections = 600;
 	o.block_after_unauthed_attempts = 30;
 	o.notify_after_absurd_auth_attempts = 20;
+	o.last_notify_absurd = (Date.now() / 1000) - o.block_for_seconds;
 	o.notify_cb = null;
 	o.purge = false;
 	o.never_block = false;
@@ -216,13 +217,16 @@ exports.init = function(opts={}) {
 
 			}
 
-			if (o.next_notify_absurd_ips.length > 0) {
+			if (o.next_notify_absurd_ips.length > 0 && Date.now() / 1000 > o.last_notify_absurd - o.block_for_seconds) {
 
 				// send notification
 				o.notify_cb('Too many failed login attempts from IP Addresses that are already authenticated.', o.next_notify_absurd_ips);
 
 				// reset it
 				o.next_notify_absurd_ips = [];
+
+				// set last notify absurd timestamp
+				o.last_notify_absurd = Date.now() / 1000;
 
 			}
 
@@ -518,8 +522,10 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			if (o.notify_cb !== null) {
 
-				// add to next notify
-				o.next_notify_absurd_ips.push(addr_string);
+				if (o.next_notify_absurd_ips.contains(addr_string) === false) {
+					// add unique ip address to next notify absurd list
+					o.next_notify_absurd_ips.push(addr_string);
+				}
 
 			}
 
