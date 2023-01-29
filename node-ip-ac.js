@@ -217,7 +217,7 @@ exports.init = function(opts={}) {
 
 			}
 
-			if (o.next_notify_absurd_ips.length > 0 && Date.now() / 1000 > o.last_notify_absurd - o.block_for_seconds) {
+			if (o.next_notify_absurd_ips.length > 0 && Date.now() / 1000 < o.last_notify_absurd - o.block_for_seconds) {
 
 				// send notification
 				o.notify_cb('Too many failed login attempts from IP Addresses that are already authenticated.', o.next_notify_absurd_ips);
@@ -516,7 +516,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			}
 
-		} else if (entry.absurd_auth_attempts === o.notify_after_absurd_auth_attempts) {
+		} else if (entry.absurd_auth_attempts >= o.notify_after_absurd_auth_attempts) {
 
 			// too many auth attempts while the IP has an authenticated session
 
