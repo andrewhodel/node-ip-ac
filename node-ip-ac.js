@@ -522,7 +522,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 			if (o.notify_cb !== null) {
 
-				if (o.next_notify_absurd_ips.contains(addr_string) === false) {
+				if (o.next_notify_absurd_ips.includes(addr_string) === false) {
 					// add unique ip address to next notify absurd list
 					o.next_notify_absurd_ips.push(addr_string);
 				}
