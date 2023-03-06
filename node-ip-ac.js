@@ -20,7 +20,8 @@ exports.init = function(opts={}) {
 
 	// remove existing firewall rules created by node-ip-ac
 	if (os.platform() == 'linux') {
-		// first flush the nodeipac chain (error is not relevant)
+
+		// flush the nodeipac chain (error is not relevant)
 		cp.exec('sudo iptables -F nodeipac', {}, function(error, stdout, stderr) {
 
 			// then delete the chain (error is not relevant)
@@ -31,6 +32,19 @@ exports.init = function(opts={}) {
 				});
 			});
 		});
+
+		// flush the nodeipac chain (error is not relevant)
+		cp.exec('sudo ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
+
+			// then delete the chain (error is not relevant)
+			cp.exec('sudo ip6tables -X nodeipac', {}, function(error, stdout, stderr) {
+
+				// then add the chain
+				cp.exec('sudo ip6tables -N nodeipac', {}, function(error, stdout, stderr) {
+				});
+			});
+		});
+
 	}
 
 	var o = {};
@@ -339,7 +353,7 @@ var ipv6_modify_subnet_block_os = function(block, subnet_string) {
 
 		// block the subnet
 		if (os.platform() == 'linux') {
-			cp.exec('sudo iptables -I nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			cp.exec('sudo ip6tables -I nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
 			});
 		}
 
@@ -347,7 +361,7 @@ var ipv6_modify_subnet_block_os = function(block, subnet_string) {
 
 		// unblock the subnet
 		if (os.platform() == 'linux') {
-			cp.exec('sudo iptables -D nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			cp.exec('sudo ip6tables -D nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
 			});
 		}
 
@@ -362,16 +376,26 @@ var modify_ip_block_os = function(block, addr_string) {
 
 		// block the IP address
 		if (os.platform() == 'linux') {
-			cp.exec('sudo iptables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
-			});
+			if (addr_string.indexOf(':') > -1) {
+				cp.exec('sudo ip6tables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				});
+			} else {
+				cp.exec('sudo iptables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				});
+			}
 		}
 
 	} else {
 
 		// unblock the IP address
 		if (os.platform() == 'linux') {
-			cp.exec('sudo iptables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
-			});
+			if (addr_string.indexOf(':') > -1) {
+				cp.exec('sudo ip6tables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				});
+			} else {
+				cp.exec('sudo iptables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				});
+			}
 		}
 
 	}
@@ -560,6 +584,8 @@ exports.purge = function(o) {
 	if (os.platform() == 'linux') {
 		// flush the nodeipac chain
 		cp.exec('sudo iptables -F nodeipac', {}, function(error, stdout, stderr) {
+		});
+		cp.exec('sudo ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
 		});
 	}
 
