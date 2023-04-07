@@ -75,11 +75,11 @@ o.block_after_unauthed_attempts = 30;
 o.notify_after_absurd_auth_attempts = 20;
 
 // event notification callback
-o.notify_cb = function(info, ips)
+o.notify_cb = function(message_id, info, ips)
 // use info:string and ips:array[string] to notify users of firewall changes
-// IP addresses were blocked
-// IP addresses exceeded the absurd_auth_attempts limit
-// IPv6 subnet was blocked
+// 0 IP addresses were blocked
+// 1 IP addresses exceeded the absurd_auth_attempts limit
+// 2 IPv6 subnet was blocked
 
 // never block, to disable the firewall
 o.never_block = false;
