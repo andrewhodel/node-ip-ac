@@ -22,28 +22,18 @@ exports.init = function(opts={}) {
 	if (os.platform() == 'linux') {
 
 		// flush the nodeipac chain (error is not relevant)
-		cp.exec('sudo iptables -F nodeipac', {}, function(error, stdout, stderr) {
+		cp.exec('sudo iptables -F nodeipac');
+		cp.exec('sudo iptables -X nodeipac');
+		cp.exec('sudo iptables -N nodeipac');
+		cp.exec('sudo iptables -D INPUT -j nodeipac');
+		cp.exec('sudo iptables -A INPUT -j nodeipac');
 
-			// then delete the chain (error is not relevant)
-			cp.exec('sudo iptables -X nodeipac', {}, function(error, stdout, stderr) {
-
-				// then add the chain
-				cp.exec('sudo iptables -N nodeipac', {}, function(error, stdout, stderr) {
-				});
-			});
-		});
-
-		// flush the nodeipac chain (error is not relevant)
-		cp.exec('sudo ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
-
-			// then delete the chain (error is not relevant)
-			cp.exec('sudo ip6tables -X nodeipac', {}, function(error, stdout, stderr) {
-
-				// then add the chain
-				cp.exec('sudo ip6tables -N nodeipac', {}, function(error, stdout, stderr) {
-				});
-			});
-		});
+		// add nodeipac to ip6tables
+		cp.execSync('sudo ip6tables -F nodeipac');
+		cp.execSync('sudo ip6tables -X nodeipac');
+		cp.execSync('sudo ip6tables -N nodeipac');
+		cp.execSync('sudo ip6tables -D INPUT -j nodeipac');
+		cp.execSync('sudo ip6tables -A INPUT -j nodeipac');
 
 	}
 
