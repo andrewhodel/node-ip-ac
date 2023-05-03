@@ -119,8 +119,8 @@ exports.init = function(opts={}) {
 		// clear expired ips
 		for (var key in o.ips) {
 
-			// the age of this ip's last access in seconds
-			var age_of_ip = (Date.now() - o.ips[key].last_access)/1000;
+			// the age of this ip in seconds
+			var age_of_ip = (Date.now() - o.ips[key].original_access)/1000;
 
 			// print each IP and it's age
 			//console.log("expire_older_than=" + expire_older_than, "age_of_ip=" + age_of_ip);
@@ -128,8 +128,10 @@ exports.init = function(opts={}) {
 
 			if (age_of_ip > expire_older_than) {
 
-				// unblock the IP at the OS level
-				modify_ip_block_os(false, key);
+				if (o.ips[key].blocked === true) {
+					// unblock the IP at the OS level
+					modify_ip_block_os(false, key);
+				}
 
 				delete o.ips[key];
 
@@ -260,7 +262,7 @@ exports.init = function(opts={}) {
 // for new (first time connections or logins)
 var default_entry = function() {
 
-	return {authed: false, warn: false, blocked: false, last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
+	return {authed: false, warn: false, blocked: false, original_access: Date.now(), last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
 
 }
 
@@ -641,7 +643,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		entry.absurd_auth_attempts++;
 
-	} else if ((now - entry.last_access)/1000 > o.block_for_seconds || authed === true) {
+	} else if ((now - entry.original_access)/1000 > o.block_for_seconds || authed === true) {
 
 		// authorized or expired
 		// reset the object keys
