@@ -28,12 +28,12 @@ exports.init = function(opts={}) {
 		cp.exec('sudo iptables -D INPUT -j nodeipac');
 		cp.exec('sudo iptables -A INPUT -j nodeipac');
 
-		// add nodeipac to ip6tables
-		cp.execSync('sudo ip6tables -F nodeipac');
-		cp.execSync('sudo ip6tables -X nodeipac');
-		cp.execSync('sudo ip6tables -N nodeipac');
-		cp.execSync('sudo ip6tables -D INPUT -j nodeipac');
-		cp.execSync('sudo ip6tables -A INPUT -j nodeipac');
+		// add nodeipac to ip6tables (error is not relevant)
+		cp.exec('sudo ip6tables -F nodeipac');
+		cp.exec('sudo ip6tables -X nodeipac');
+		cp.exec('sudo ip6tables -N nodeipac');
+		cp.exec('sudo ip6tables -D INPUT -j nodeipac');
+		cp.exec('sudo ip6tables -A INPUT -j nodeipac');
 
 	}
 
