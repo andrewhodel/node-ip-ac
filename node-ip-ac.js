@@ -256,46 +256,30 @@ var default_entry = function() {
 
 }
 
-var ipv6_get_ranked_groups = function(o, addr_string) {
+var ipv6_get_ranked_groups = function(o, addr) {
 
-	// get each ranked group after o.BlockIpv6SubnetsGroupDepth
-	// if addr is ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-	// and o.BlockIpv6SubnetsGroupDepth is 4
+	// get each ranked group after o.block_ipv6_subnets_group_depth
+	// if addr is aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh
+	// and o.block_ipv6_subnets_group_depth is 4
 	// return
-	// ffff:ffff:ffff:ffff
-	// ffff:ffff:ffff:ffff:ffff
-	// ffff:ffff:ffff:ffff:ffff:ffff
-	// ffff:ffff:ffff:ffff:ffff:ffff:ffff
+	// aaaa:bbbb:cccc:dddd
+	// aaaa:bbbb:cccc:dddd:eeee
+	// aaaa:bbbb:cccc:dddd:eeee:ffff
+	// aaaa:bbbb:cccc:dddd:eeee:ffff:gggg
 	// to match by these prefixes as ipv6 subnets quickly
 
-	// split groups
 	var groups = addr_string.split(':');
 
-	// create ranked groups
 	var ranked_groups = [];
 
-	var at = 0;
 	var g = 0;
+	while (g < 8-o.block_ipv6_subnets_group_depth) {
 
-	while (g < o.block_ipv6_subnets_group_depth) {
-
-		var prefix = '';
-
-		var l = 0;
-		while (l < o.block_ipv6_subnets_group_depth) {
-			// add first to `o.BlockIpv6SubnetsGroupDepth` strings of `groups`
-			prefix += groups[l] + ':';
-			l++;
-		}
-
-		// remove the last :
-		prefix = prefix.slice(0, prefix.length-1);
-
-		l = 0;
-		while (l < at) {
-			// then `o.BlockIpv6SubnetsGroupDepth` to `o.BlockIpv6SubnetsGroupDepth+at` strings of `groups`
-			prefix += groups[l + o.block_ipv6_subnets_group_depth] + ':';
-			l++;
+		var prefix = ""
+		var a = 0;
+		while (a < 8-o.block_ipv6_subnets_group_depth+g) {
+			prefix += groups[a] + ":"
+			a++;
 		}
 
 		// remove the last :
@@ -304,14 +288,11 @@ var ipv6_get_ranked_groups = function(o, addr_string) {
 		// add to ranked_groups
 		ranked_groups.push(prefix);
 
-		// increment at
-		at++;
-
 		g++;
 
 	}
 
-	return ranked_groups;
+	return ranked_groups
 
 }
 
