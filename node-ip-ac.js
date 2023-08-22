@@ -256,10 +256,10 @@ var default_entry = function() {
 
 }
 
-var ipv6_get_ranked_groups = function(o, addr) {
+var ipv6_get_ranked_groups = function(o, addr_string) {
 
 	// get each ranked group after o.block_ipv6_subnets_group_depth
-	// if addr is aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh
+	// if addr_string is aaaa:bbbb:cccc:dddd:eeee:ffff:gggg:hhhh
 	// and o.block_ipv6_subnets_group_depth is 4
 	// return
 	// aaaa:bbbb:cccc:dddd
@@ -292,7 +292,7 @@ var ipv6_get_ranked_groups = function(o, addr) {
 
 	}
 
-	return ranked_groups
+	return ranked_groups;
 
 }
 
