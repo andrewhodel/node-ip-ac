@@ -270,6 +270,58 @@ var ipv6_get_ranked_groups = function(o, addr_string) {
 
 	var groups = addr_string.split(':');
 
+	// make full length IPv6 address
+
+	// an address with repeating 0000 groups can replace the series of repeating groups with :: once
+	// Original: 2041:0000:140F:0000:0000:0000:875B:131B (8)
+	// Short: 2041:0000:140F::875B:131B (6)
+	var g = 0;
+	while (g < groups.length) {
+		if (groups[g].length === 0) {
+			// set the empty group to 0000
+			groups[g] = '0000';
+			// get the number of new zero groups
+			var number_of_new_zero_groups = 8-groups.length;
+			// add the new groups
+			var p = 0;
+			while (p < number_of_new_zero_groups) {
+				groups.splice(g, 0, '0000');
+				p++;
+			}
+			break
+		}
+		g++;
+	}
+
+	// one group of 4 zeroes can be replaced with only a 0
+	// Short: 2041:0000:140F::875B:131B
+	// Shorter: 2041:0:140F::875B:131B
+	var g = 0;
+	while (g < groups.length) {
+		if (groups[g] === '0') {
+			groups[g] = '0000';
+		}
+		g++;
+	}
+
+	// leading zeroes in each group can also be removed
+	// Original: 2001:0001:0002:0003:0004:0005:0006:0007
+	// Short: 2001:1:2:3:4:5:6:7
+	var g = 0;
+	while (g < groups.length) {
+		if (groups[g].length < 4) {
+			var number_of_prefix_zeroes = 4-groups[g].length;
+			var prefix = '';
+			var p = 0;
+			while (p < number_of_prefix_zeroes) {
+				prefix += '0';
+				p++;
+			}
+			groups[g] = prefix + groups[g];
+		}
+		g++;
+	}
+
 	var ranked_groups = [];
 
 	var g = 0;
