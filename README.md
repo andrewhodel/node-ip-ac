@@ -37,7 +37,7 @@ Set these in the object {} passed as the first argument to `ipac.init();` if you
 o.cleanup_loop_seconds = 60;
 
 // how many seconds to ban/block entities for
-o.block_for_seconds = 60 * 60 * 24;
+o.block_for_seconds = 60 * 60;
 
 // maximum depth to classify IPv6 is
 // 64 bits of a network prefix and 64 bits of an interface identifier

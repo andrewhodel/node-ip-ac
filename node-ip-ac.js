@@ -42,7 +42,7 @@ exports.init = function(opts={}) {
 	// default configurable options
 	// explained in README.md
 	o.cleanup_loop_seconds = 60;
-	o.block_for_seconds = 60 * 60 * 24;
+	o.block_for_seconds = 60 * 60;
 	o.block_ipv6_subnets_group_depth = 4;
 	o.block_ipv6_subnets_breach = 40;
 	o.warn_after_new_connections = 80;
