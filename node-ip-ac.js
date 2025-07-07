@@ -196,7 +196,7 @@ exports.init = function(opts={}) {
 				if (o.notify_cb !== null) {
 
 					// send notification
-					o.notify_cb(2, 'IPv6 subnet blocked.', [s]);
+					o.notify_cb('subnet_blocked', 'IPv6 subnet blocked.', [s]);
 
 				}
 
@@ -217,7 +217,7 @@ exports.init = function(opts={}) {
 			if (o.next_notify_blocked_ips.length > 0) {
 
 				// send notification
-				o.notify_cb(0, 'IP addresses blocked.', o.next_notify_blocked_ips);
+				o.notify_cb('ips_blocked', 'IP addresses blocked.', o.next_notify_blocked_ips);
 
 				// reset it
 				o.next_notify_blocked_ips = [];
@@ -227,7 +227,7 @@ exports.init = function(opts={}) {
 			if (o.next_notify_absurd_ips.length > 0 && Date.now() / 1000 < o.last_notify_absurd - o.block_for_seconds) {
 
 				// send notification
-				o.notify_cb(1, 'Too many failed login attempts from IP Addresses that are already authenticated.', o.next_notify_absurd_ips);
+				o.notify_cb('ips_exceeded_absurd_auth_attempts', 'Too many failed login attempts from IP Addresses that are already authenticated.', o.next_notify_absurd_ips);
 
 				// reset it
 				o.next_notify_absurd_ips = [];
