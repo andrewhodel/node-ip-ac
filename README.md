@@ -9,11 +9,11 @@ var ip_ac = ipac.init();
 
 // set authorization status for an IP
 // logout
-ipac.modify_auth(ip_ac, undefined, '127.0.0.1');
+ipac.modify_auth(ip_ac, 'logout', '127.0.0.1');
 // invalid login credentials
-ipac.modify_auth(ip_ac, false, '127.0.0.1');
+ipac.modify_auth(ip_ac, 'invalid_login', '127.0.0.1');
 // authorized (valid login credentials)
-ipac.modify_auth(ip_ac, true, '127.0.0.1');
+ipac.modify_auth(ip_ac, 'valid_login', '127.0.0.1');
 
 // test authorization status for an IP
 // this needs to be called every time there is a new IP connection

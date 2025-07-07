@@ -15,6 +15,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 var os = require('os');
 var cp = require('child_process');
 var net = require('net');
+var process = require('process');
 
 exports.init = function(opts={}) {
 
@@ -653,7 +654,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 	// get a current timestamp
 	var now = Date.now();
 
-	if (entry.authed === true && authed === false) {
+	if (entry.authed === true && authed === "invalid_login") {
 		// an IP address is authorized but invalid authorizations are happening from the IP
 		// perhaps someone else at the location is abusing the authed IP address and trying to guess
 		// logins or logout the valid user
@@ -666,24 +667,29 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		entry.absurd_auth_attempts++;
 
-	} else if (authed === true) {
+	} else if (authed === "valid_login") {
 
 		// authorized
 		entry.blocked = false;
 		entry.warn = false;
 		entry.authed = true;
 
-	} else if (authed === false) {
+	} else if (authed === "invalid_login") {
 
 		// not authorized, not expired
 
 		// increment the invalid authorization attempts counter for the IP address
 		entry.unauthed_attempts++;
 
-	} else if (authed === undefined) {
+	} else if (authed === "logout") {
 
 		// this is a valid logout attempt that was authenticated
 		entry.authed = false;
+
+	} else {
+
+		console.log("ipac.ModifyAuth called with invalid authed string.  Only logout, invalid_login and valid_login are allowed.");
+		process.exit(1)
 
 	}
 
