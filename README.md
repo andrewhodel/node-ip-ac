@@ -7,7 +7,7 @@ var ipac = require('node-ip-ac/node-ip-ac.js');
 
 var ip_ac = ipac.init();
 
-// set authorization status for an IP
+// set authorization status of an IP
 // logout
 ipac.modify_auth(ip_ac, 'logout', '127.0.0.1');
 // invalid login credentials
@@ -15,14 +15,14 @@ ipac.modify_auth(ip_ac, 'invalid_login', '127.0.0.1');
 // authorized (valid login credentials)
 ipac.modify_auth(ip_ac, 'valid_login', '127.0.0.1');
 
-// test authorization status for an IP
+// test authorization status of an IP
 // this needs to be called every time there is a new IP connection
 var status = ipac.test_ip_allowed(ip_ac, '127.0.0.1');
 
 // test if you should warn users from an IP
 var warn = ipac.test_ip_warn(ip_ac, '127.0.0.1');
 
-// return details for a specific ip address
+// return details of a specific ip address
 var ip_details = ipac.ip_details(ip_ac, '127.0.0.1');
 ```
 
@@ -59,7 +59,7 @@ o.block_ipv6_subnets_breach = 40;
 
 // warn after N unauthorized new connections
 // requests from these IP addresses should
-// display a denial of service warning for the IP
+// display a denial of service warning to the IP
 // in the user interface
 o.warn_after_new_connections = 80;
 
@@ -105,11 +105,11 @@ ip_ac.blocked_subnet_count;
 
 ## firewall support
 
-In this module there exists support for `iptables` on Linux.
+In this module there exists support of `iptables` and `ip6tables` in Linux.
 
-There is structure for supporting any OS and firewall that NodeJS supports.
+There is structure to support any OS and firewall that NodeJS supports.
 
-There is also structure for supporting API calls to network or hosting providers, like AWS.
+There is also structure to support API calls to network or hosting providers, like AWS.
 
 ## license
 
