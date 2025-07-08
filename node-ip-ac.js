@@ -498,7 +498,6 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 	addr_string = clean_ip_string(addr_string);
 
-	// always ran at the start of any request
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 
