@@ -22,19 +22,39 @@ exports.init = function(opts={}) {
 	// remove existing firewall rules created by node-ip-ac
 	if (os.platform() == 'linux') {
 
-		// flush the nodeipac chain (error is not relevant)
-		cp.exec('sudo iptables -F nodeipac');
-		cp.exec('sudo iptables -X nodeipac');
-		cp.exec('sudo iptables -N nodeipac');
-		cp.exec('sudo iptables -D INPUT -j nodeipac');
-		cp.exec('sudo iptables -A INPUT -j nodeipac');
+		// flush the nodeipac chain
+		cp.exec('iptables -F nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('iptables -X nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('iptables -N nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('iptables -D INPUT -j nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('iptables -A INPUT -j nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
 
-		// add nodeipac to ip6tables (error is not relevant)
-		cp.exec('sudo ip6tables -F nodeipac');
-		cp.exec('sudo ip6tables -X nodeipac');
-		cp.exec('sudo ip6tables -N nodeipac');
-		cp.exec('sudo ip6tables -D INPUT -j nodeipac');
-		cp.exec('sudo ip6tables -A INPUT -j nodeipac');
+		// add nodeipac to ip6tables
+		cp.exec('ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('ip6tables -X nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('ip6tables -N nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('ip6tables -D INPUT -j nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
+		cp.exec('ip6tables -A INPUT -j nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
+		});
 
 	}
 
@@ -379,7 +399,8 @@ var ipv6_modify_subnet_block_os = function(block, subnet_string) {
 
 		// block the subnet
 		if (os.platform() == 'linux') {
-			cp.exec('sudo ip6tables -I nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			cp.exec('ip6tables -I nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				if (stderr !== '') {console.log(stderr);}
 			});
 		}
 
@@ -387,7 +408,8 @@ var ipv6_modify_subnet_block_os = function(block, subnet_string) {
 
 		// unblock the subnet
 		if (os.platform() == 'linux') {
-			cp.exec('sudo ip6tables -D nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+			cp.exec('ip6tables -D nodeipac -s "' + iptables_subnet_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				if (stderr !== '') {console.log(stderr);}
 			});
 		}
 
@@ -403,10 +425,12 @@ var modify_ip_block_os = function(block, addr_string) {
 		// block the IP address
 		if (os.platform() == 'linux') {
 			if (addr_string.indexOf(':') > -1) {
-				cp.exec('sudo ip6tables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				cp.exec('ip6tables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+					if (stderr !== '') {console.log(stderr);}
 				});
 			} else {
-				cp.exec('sudo iptables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				cp.exec('iptables -I nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+					if (stderr !== '') {console.log(stderr);}
 				});
 			}
 		}
@@ -416,10 +440,12 @@ var modify_ip_block_os = function(block, addr_string) {
 		// unblock the IP address
 		if (os.platform() == 'linux') {
 			if (addr_string.indexOf(':') > -1) {
-				cp.exec('sudo ip6tables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				cp.exec('ip6tables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+					if (stderr !== '') {console.log(stderr);}
 				});
 			} else {
-				cp.exec('sudo iptables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+				cp.exec('iptables -D nodeipac -s "' + addr_string + '" -j DROP', {}, function(error, stdout, stderr) {
+					if (stderr !== '') {console.log(stderr);}
 				});
 			}
 		}
@@ -608,9 +634,11 @@ exports.purge = function(o) {
 
 	if (os.platform() == 'linux') {
 		// flush the nodeipac chain
-		cp.exec('sudo iptables -F nodeipac', {}, function(error, stdout, stderr) {
+		cp.exec('iptables -F nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
 		});
-		cp.exec('sudo ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
+		cp.exec('ip6tables -F nodeipac', {}, function(error, stdout, stderr) {
+			if (stderr !== '') {console.log(stderr);}
 		});
 	}
 

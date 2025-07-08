@@ -3,7 +3,7 @@
 In your socket/request/api code
 
 ```javascript
-var ipac = require('node-ip-ac/node-ip-ac.js');
+var ipac = require('node-ip-ac');
 
 var ip_ac = ipac.init();
 
