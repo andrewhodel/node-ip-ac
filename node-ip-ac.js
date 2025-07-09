@@ -524,6 +524,8 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 	addr_string = clean_ip_string(addr_string);
 
+	// this must be called every time there is a new IP connection, it accounts for the number of connections
+
 	// returns false if the IP address has made too many unauthenticated requests and is not allowed
 	// returns true is the connection is allowed
 

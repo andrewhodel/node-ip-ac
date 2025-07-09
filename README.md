@@ -16,8 +16,7 @@ ipac.modify_auth(ip_ac, 'invalid_login', '127.0.0.1');
 ipac.modify_auth(ip_ac, 'valid_login', '127.0.0.1');
 
 // test authorization status of an IP
-// this can be called every time there is a new IP connection
-// if you want to block the IP connection in the application, it is not required if you are using iptables/ip6tables
+// this must be called every time there is a new IP connection, it accounts for the number of connections
 var status = ipac.test_ip_allowed(ip_ac, '127.0.0.1');
 
 // test if you should warn users from an IP
