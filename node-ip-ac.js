@@ -185,7 +185,7 @@ exports.init = function(opts={}) {
 					ipv6_modify_subnet_block_os(false, s);
 					delete o.ipv6_subnets[s];
 				} else {
-					// increment the blocked subnet count for this cleanup() loop
+					// increment the blocked subnet count of this cleanup() loop
 					cblocked_subnet++;
 				}
 
@@ -210,7 +210,7 @@ exports.init = function(opts={}) {
 				ipv6_modify_subnet_block_os(true, s);
 				o.ipv6_subnets[s].blockedMs = Date.now();
 
-				// increment the blocked subnet count for this cleanup() loop
+				// increment the blocked subnet count of this cleanup() loop
 				cblocked_subnet++;
 
 				if (o.notify_cb !== null) {
@@ -270,7 +270,7 @@ exports.init = function(opts={}) {
 }
 
 // this is a default entry
-// for new (first time connections or logins)
+// new connections or logins
 var default_entry = function() {
 
 	return {authed: false, warn: false, blocked: false, original_access: Date.now(), last_access: Date.now(), last_auth: Date.now(), unauthed_new_connections: 0, unauthed_attempts: 0, absurd_auth_attempts: 0};
@@ -535,7 +535,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 		var entry = o.ips[addr_string];
 
 		if (entry.authed === false) {
-			// increment the number of unauthed connections for this IP address
+			// increment the number of unauthed connections of this IP address
 			entry.unauthed_new_connections++;
 		}
 
@@ -550,7 +550,9 @@ exports.test_ip_allowed = function(o, addr_string) {
 
 		// block this IP address if it has made too many unauthed connections
 		// or invalid authorization attempts
-		if ((entry.unauthed_new_connections >= o.block_after_new_connections || entry.unauthed_attempts >= o.block_after_unauthed_attempts) && entry.blocked === false) {
+		if ((entry.unauthed_new_connections >= o.block_after_new_connections || entry.unauthed_attempts >= o.block_after_unauthed_attempts) && entry.blocked === false && entry.authed === false) {
+
+			// IP address is not authed
 
 			// set the IP address to blocked
 			entry.blocked = true;
@@ -580,7 +582,7 @@ exports.test_ip_allowed = function(o, addr_string) {
 				while (a < ranked_groups.length) {
 
 					if (o.ipv6_subnets[ranked_groups[a]] !== undefined) {
-						// add one to the counter for this subnet group
+						// add one to the counter of this subnet group
 						o.ipv6_subnets[ranked_groups[a]].ip_bans++;
 					} else {
 						// it's new
@@ -670,7 +672,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 	}
 
 	// modify the authorization status
-	// via the authed argument for the IP address in addr_string
+	// via the authed argument of the IP address in addr_string
 
 	if (o.ips[addr_string] === undefined) {
 		// this IP address is new to the access control system
@@ -707,7 +709,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		// not authorized, not expired
 
-		// increment the invalid authorization attempts counter for the IP address
+		// increment the invalid authorization attempts counter of the IP address
 		entry.unauthed_attempts++;
 
 	} else if (authed === "logout") {
