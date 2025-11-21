@@ -705,6 +705,9 @@ exports.modify_auth = function(o, authed, addr_string) {
 		entry.warn = false;
 		entry.authed = true;
 
+		entry.unauthed_new_connections = 0;
+		entry.unauthed_attempts = 0;
+
 	} else if (authed === "invalid_login") {
 
 		// not authorized, not expired
@@ -716,6 +719,7 @@ exports.modify_auth = function(o, authed, addr_string) {
 
 		// this is a valid logout attempt that was authenticated
 		entry.authed = false;
+
 		entry.unauthed_new_connections = 0;
 		entry.unauthed_attempts = 0;
 		entry.absurd_auth_attempts = 0;
